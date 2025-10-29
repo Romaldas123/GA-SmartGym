@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartGym – Registrering & Inloggning</title>
+  <link rel="stylesheet" href="register.css" />
+</head>
+<body>
+  <div class="wrapper">
+    <div class="form-container">
+
+      <div class="tabs">
+        <button id="registerTab" class="tab active">Registrera</button>
+        <button id="loginTab" class="tab">Logga in</button>
+      </div>
+
+      <form id="registerForm" class="form active">
+        <h1>Skapa konto</h1>
+        <p class="subtitle">Börja din resa med SmartGym</p>
+        <input type="text" id="name" placeholder="Fullständigt namn" required />
+        <input type="email" id="email" placeholder="E-postadress" required />
+        <input type="password" id="password" placeholder="Lösenord" required />
+        <button type="submit" class="btn">Registrera</button>
+      </form>
+
+      <form id="loginForm" class="form">
+        <h1>Logga in</h1>
+        <p class="subtitle">Välkommen tillbaka till SmartGym</p>
+        <input type="email" id="loginEmail" placeholder="E-postadress" required />
+        <input type="password" id="loginPassword" placeholder="Lösenord" required />
+        <button type="submit" class="btn">Logga in</button>
+      </form>
+
+      <p class="footer-text">Genom att fortsätta går du vidare till SmartGyms onboarding-frågor.</p>
+    </div>
+  </div>
+
+  <script src="register.js"></script>
+</body>
+</html>
