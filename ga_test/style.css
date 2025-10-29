@@ -1,11 +1,14 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #f5f5f5;
+    color: #333;
+    text-align: center;
+    padding: 40px;
 }
 
 .container {
     width: 50%;
-    margin: 50px auto;
+    margin: 30px auto;
     background: #fff;
     padding: 20px;
     border-radius: 10px;
@@ -13,9 +16,11 @@ body {
 }
 
 input, textarea {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
+    width: 90%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
 }
 
 input[type="submit"] {
@@ -25,11 +30,14 @@ input[type="submit"] {
     border: none;
     cursor: pointer;
     padding: 10px 20px;
+    margin-top: 10px;
     border-radius: 5px;
 }
 
 .comment {
-    padding: 5px;
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 5px;
+    text-align: left;
+    background: #f0f0f0;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 5px;
 }
