@@ -1,33 +1,40 @@
 <?php
-// Visa fel i XAMPP
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// Koppla till din databas
 $conn = new mysqli("localhost", "root", "", "ga_project");
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Hantera POST
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
 
-    if(!empty($name) && !empty($email) && !empty($password)){
-        // Hasha lösenordet
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+    if(!empty($name) && !empty($email) && !empty($password)) {
+        // Kontrollera om e-post redan finns
+        $stmt = $conn->prepare("SELECT id FROM users WHERE email=?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $stmt->store_result();
 
-        // Förberedd statement
-        $stmt = $conn->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $name, $email, $passwordHash);
-
-        if($stmt->execute()){
-            echo "Registrering lyckades! <a href='fragor.html'>Gå vidare till frågorna</a>";
+        if($stmt->num_rows > 0){
+            echo "E-postadressen används redan!";
         } else {
-            // Exempel: e-mail redan används
-            echo "Fel: " . $stmt->error;
+            // Hasha lösenord
+            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+            $stmt = $conn->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $name, $email, $passwordHash);
+
+            if($stmt->execute()){
+                // ✅ Skicka direkt till fragor.html med korrekt sökväg
+                header("Location: ../Frontend_Struktur/Frontend_fragor/fragor.html");
+                exit();
+            } else {
+                echo "Fel: " . $stmt->error;
+            }
         }
 
         $stmt->close();
