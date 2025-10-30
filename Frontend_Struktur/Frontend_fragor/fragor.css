@@ -103,3 +103,9 @@ input::placeholder, select option{
   font-weight:600;
   margin-top:8px;
 }
+
+select option {
+  background: #ffffff; 
+  color: #000;
+}
+  

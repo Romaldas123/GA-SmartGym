@@ -9,33 +9,34 @@
 <body>
   <div class="wrapper">
     <div class="form-container">
-
       <div class="tabs">
         <button id="registerTab" class="tab active">Registrera</button>
         <button id="loginTab" class="tab">Logga in</button>
       </div>
 
-      <form id="registerForm" class="form active">
+      <!-- Registrering -->
+      <form id="registerForm" class="form active" method="POST" action="../../Backend_Struktur/register.php">
         <h1>Skapa konto</h1>
         <p class="subtitle">Börja din resa med SmartGym</p>
-        <input type="text" id="name" placeholder="Fullständigt namn" required />
-        <input type="email" id="email" placeholder="E-postadress" required />
-        <input type="password" id="password" placeholder="Lösenord" required />
+        <input type="text" id="name" name="name" placeholder="Fullständigt namn" required />
+        <input type="email" id="email" name="email" placeholder="E-postadress" required />
+        <input type="password" id="password" name="password" placeholder="Lösenord" required />
         <button type="submit" class="btn">Registrera</button>
       </form>
 
-      <form id="loginForm" class="form">
+      <!-- Inloggning -->
+      <form id="loginForm" class="form" method="POST" action="../../Backend_Struktur/login.php">
         <h1>Logga in</h1>
         <p class="subtitle">Välkommen tillbaka till SmartGym</p>
-        <input type="email" id="loginEmail" placeholder="E-postadress" required />
-        <input type="password" id="loginPassword" placeholder="Lösenord" required />
+        <input type="email" id="loginEmail" name="email" placeholder="E-postadress" required />
+        <input type="password" id="loginPassword" name="password" placeholder="Lösenord" required />
         <button type="submit" class="btn">Logga in</button>
       </form>
 
       <p class="footer-text">Genom att fortsätta går du vidare till SmartGyms onboarding-frågor.</p>
     </div>
   </div>
-
-  <script src="register.js"></script>
+   
+   <script src="register.js"></script>
 </body>
 </html>
