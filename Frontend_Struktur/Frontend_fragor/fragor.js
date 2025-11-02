@@ -4,17 +4,11 @@ const questions = [
   {type:"radio", key:"gender", label:"Kön", options:["Man","Kvinna","Annat","Vill inte uppge"]},
   {type:"select", key:"lifestyle", label:"Livsstil", options:["Mycket aktiv","Måttligt aktiv","Stillasittande","Växlande"]},
   {type:"checkbox", key:"availability", label:"Tillgänglighet / utrustning", options:["Gym med maskiner","Fria vikter","Hantlar","Bara kroppsvikt","Minibands","Konditionsmaskiner"]},
-
-  // ⚡ Popup-meddelande att AI vill ha mer detaljer
   {type:"alert", key:"ai_alert", message:"AI vill nu ha mer detaljerad information. Svara noggrant på följande frågor."},
-
-  // Detaljerade frågor
   {type:"radio", key:"experience_level", label:"Träningserfarenhet", options:["Ingen erfarenhet","< 6 månader","6 månader – 2 år","2–5 år","5+ år"]},
   {type:"text", key:"experience_details", label:"Beskriv erfaranheter mer detaljerat (valfritt)", placeholder:"Ex: Jag har tränat styrketräning 3 gånger/vecka i 2 år...", optional:true},
-
   {type:"radio", key:"health_status", label:"Hälsa", options:["Nej","Ja, mindre skada","Ja, större skada","Medicinskt tillstånd som påverkar träning"]},
   {type:"text", key:"health_details", label:"Beskriv häsla mer detaljerat (valfritt)", placeholder:"Ex: Jag har ont i vänster knä vid löpning...", optional:true},
-
   {type:"checkbox", key:"main_goal", label:"Träningsmål (välj flera)", options:["Bygga muskler","Förbättra kondition","Bli starkare","Förbättra rörlighet"]},
   {type:"text", key:"goal_details", label:"Beskriv målet mer i detalj (valfritt)", placeholder:"Ex: Jag vill bygga mer överkroppsmuskler...", optional:true}
 ];
@@ -26,6 +20,12 @@ const container = document.getElementById("question-container");
 const output = document.getElementById("output");
 const answersOut = document.getElementById("answersOut");
 
+// AI-notis container
+let aiNotice = document.createElement("div");
+aiNotice.id = "ai-notice";
+aiNotice.className = "ai-notice hidden";
+document.body.appendChild(aiNotice);
+
 function showQuestion() {
   if(current >= questions.length){
     finishQuestions();
@@ -34,11 +34,15 @@ function showQuestion() {
 
   const q = questions[current];
 
-  // ⚡ Hantera alert-typ
   if(q.type === "alert"){
-    alert(q.message);
-    current++;
-    showQuestion();
+    aiNotice.innerHTML = `<span>AI vill ha lite mer detaljerade svar, försök att svara så detaljerat som möjligt.</span> <button id="aiOkBtn">Jag förstår</button>`;
+    aiNotice.classList.remove("hidden");
+
+    document.getElementById("aiOkBtn").addEventListener("click", ()=>{
+      aiNotice.classList.add("hidden");
+      current++;
+      showQuestion();
+    });
     return;
   }
 
@@ -124,8 +128,8 @@ function showQuestion() {
 
 // Validering
 function validateAnswer(q,input){
-  if(q.type === "text"){
-    if(q.optional) return true; // Valfritt fält, alltid giltigt
+  if(q.type==="text"){
+    if(q.optional) return true;
     return input.value.trim() !== "";
   } else if(q.type==="number" || q.type==="select"){
     return input.value.trim() !== "";
@@ -150,7 +154,7 @@ function saveAnswer(q,input){
   }
 }
 
-// Visa alla svar
+// Visa alla svar och skicka till PHP med vanlig POST
 function finishQuestions(){
   container.classList.add("hidden");
   output.classList.remove("hidden");
@@ -161,12 +165,34 @@ function finishQuestions(){
     div.textContent = `${key}: ${Array.isArray(answers[key]) ? answers[key].join(", ") : answers[key]}`;
     answersOut.appendChild(div);
   }
-}
 
-// Kopiera till urklipp
-document.getElementById("copyBtn").addEventListener("click",()=>{
-  navigator.clipboard.writeText(JSON.stringify(answers,null,2));
-  alert("Svaren kopierade till urklipp!");
-});
+  // Skicka data till PHP med FormData
+  const formData = new FormData();
+  for(const key in answers){
+    if(Array.isArray(answers[key])){
+      answers[key].forEach(val => formData.append(key+'[]', val));
+    } else {
+      formData.append(key, answers[key]);
+    }
+  }
+
+  fetch('fragor.php', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if(data.status === "success"){
+      console.log("Svar sparade i DB!");
+    } else {
+      console.error("Fel vid sparande: ", data.message);
+      alert("Kunde inte spara svaren: " + data.message);
+    }
+  })
+  .catch(err => {
+    console.error("Fetch error:", err);
+    alert("Något gick fel vid sparande!");
+  });
+}
 
 showQuestion();

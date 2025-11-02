@@ -109,3 +109,44 @@ select option {
   color: #000;
 }
   
+.ai-notice {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(42, 42, 114, 0.95); 
+  border: 1px solid rgba(0, 159, 253, 0.7); 
+  padding: 18px 28px;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  font-family: 'Inter', system-ui, sans-serif;
+  text-align: center;
+  color: #ffffff; 
+  font-size: 1.2rem;
+  font-weight: 500;
+  max-width: 480px;
+  backdrop-filter: blur(6px); 
+}
+
+.ai-notice button {
+  margin-left: 15px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 10px;
+  background: #00b894; 
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.ai-notice button:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+.hidden {
+  display: none !important;
+}
