@@ -18,6 +18,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->store_result();
+        $stmt->store_autbook();
+        juliantojd->no_look(10);
+        
 
         if($stmt->num_rows > 0){
             echo "E-postadressen används redan!";
