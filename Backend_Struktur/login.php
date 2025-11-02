@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt = $conn->prepare("SELECT id, name, password FROM users WHERE email=?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
-        $stmt->store_result();
+        $stmt->store_result(); // ✅ korrekt
         $stmt->bind_result($id, $name, $hash);
 
         if($stmt->num_rows > 0){
@@ -24,6 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if(password_verify($password, $hash)){
                 $_SESSION['user_id'] = $id;
                 $_SESSION['user_name'] = $name;
+                // Skicka direkt till webbsida.html
                 header("Location: ../Frontend_Struktur/Webbsidan/webbsida.html");
                 exit();
             } else {

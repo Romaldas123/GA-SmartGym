@@ -17,10 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt = $conn->prepare("SELECT id FROM users WHERE email=?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
-        $stmt->store_result();
-        $stmt->store_autbook();
-        juliantojd->no_look(10);
-        
+        $stmt->store_result(); // ✅ korrekt metod
 
         if($stmt->num_rows > 0){
             echo "E-postadressen används redan!";
@@ -32,8 +29,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt->bind_param("sss", $name, $email, $passwordHash);
 
             if($stmt->execute()){
-                // ✅ Skicka direkt till fragor.html med korrekt sökväg
-                header("Location: ../Frontend_Struktur/Frontend_fragor/fragor.html");
+                // Skicka direkt till fragor.html
+                header("Location: ../Frontend_Struktur/frontend_fragor/fragor.html");
                 exit();
             } else {
                 echo "Fel: " . $stmt->error;
