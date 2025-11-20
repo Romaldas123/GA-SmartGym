@@ -13,23 +13,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $password = trim($_POST['password'] ?? '');
 
     if(!empty($name) && !empty($email) && !empty($password)) {
-        // Kontrollera om e-post redan finns
+       
         $stmt = $conn->prepare("SELECT id FROM users WHERE email=?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
-        $stmt->store_result(); // ✅ korrekt metod
+        $stmt->store_result(); 
 
         if($stmt->num_rows > 0){
             echo "E-postadressen används redan!";
         } else {
-            // Hasha lösenord
+          
             $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
             $stmt = $conn->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
             $stmt->bind_param("sss", $name, $email, $passwordHash);
 
             if($stmt->execute()){
-                // Skicka direkt till fragor.html
+            
                 header("Location: ../Frontend_Struktur/frontend_fragor/fragor.html");
                 exit();
             } else {

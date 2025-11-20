@@ -176,10 +176,11 @@ function finishQuestions(){
     }
   }
 
-  fetch('fragor.php', {
-    method: 'POST',
-    body: formData
-  })
+ fetch('../../Backend_Struktur/fragor.php', {
+  method: 'POST',
+  body: formData
+})
+
   .then(response => response.json())
   .then(data => {
     if(data.status === "success"){
