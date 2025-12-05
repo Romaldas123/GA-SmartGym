@@ -1,153 +1,140 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="sv">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SmartGym — AI Personal Trainer (Frontend Demo)</title>
-  <link rel="stylesheet" href="webbsida.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartGym — AI Personal Trainer</title>
+  <link rel="stylesheet" href="webbsida.css" />
 </head>
 <body>
-  <header class="topbar">
+  <header class="topbar" role="banner">
     <div class="brand">
-      <div class="logo">🏋️‍♂️</div>
+      <div class="logo" aria-hidden="true">🏋️‍♂️</div>
       <div>
         <h1>SmartGym</h1>
-        <small>AI-driven personalized workouts</small>
+        <small>Your AI-powered Training Companion</small>
       </div>
     </div>
-    <nav class="topnav" role="navigation" aria-label="Main navigation">
-      <button id="nav-home" class="nav-btn" aria-controls="home">Home</button>
-      <button id="nav-onboard" class="nav-btn" aria-controls="onboarding">Onboarding</button>
-      <button id="nav-dashboard" class="nav-btn" aria-controls="dashboard">Dashboard</button>
-      <button id="nav-profile" class="nav-btn" aria-controls="profile">Profile</button>
-      <button id="nav-export" class="nav-btn">Export</button>
+
+    <nav class="topnav" role="navigation" aria-label="Huvudmeny">
+      <button class="nav-btn" data-target="home">Home</button>
+      <button class="nav-btn" data-target="onboarding">Onboarding</button>
+      <button class="nav-btn" data-target="dashboard">Dashboard</button>
+      <button class="nav-btn" data-target="profile">Profile</button>
+      <button class="nav-btn" id="toggle-theme" aria-pressed="false">Dark</button>
     </nav>
   </header>
 
-  <main id="app" class="container">
-    <!-- HOME / HERO -->
-    <section id="home" class="panel active" tabindex="-1">
+  <main id="app" class="container" role="main">
+    <!-- HOME -->
+    <section id="home" class="panel active" aria-labelledby="home-title">
       <div class="hero-grid">
         <div class="hero-card">
-          <h2>Personalized training. Real results.</h2>
-          <p>SmartGym analyserar din profil och bygger en progressiv, realistisk plan — och anpassar sig när du loggar pass eller ber om förändringar.</p>
+          <h2 id="home-title">Train Smarter. Grow Stronger.</h2>
+          <p>Let SmartGym analyze your goals and create your personal adaptive workout plan. No guessing. Just results.</p>
           <div class="cta-row">
-            <button id="cta-start" class="btn primary">Starta onboarding</button>
-            <button id="cta-try" class="btn ghost">Prova exempelplan</button>
-          </div>
-
-          <div class="features">
-            <div class="chip">AI-driven</div>
-            <div class="chip">Personligt schema</div>
-            <div class="chip">Spara lokalt</div>
+            <button class="btn primary" data-target="onboarding">Get Started</button>
+            <button class="btn ghost" id="try-demo">Try Demo Plan</button>
           </div>
         </div>
 
-        <div>
-          <div class="hero-stats">
-            <div class="stat center">
-              <div class="stat-num" id="stat-users">—</div>
-              <div class="stat-label">Active demo users</div>
-            </div>
-            <div class="stat center">
-              <div class="stat-num" id="stat-plans">—</div>
-              <div class="stat-label">Generated plans</div>
-            </div>
-            <div class="stat center">
-              <div class="stat-num" id="stat-exercises">—</div>
-              <div class="stat-label">Exercises in DB</div>
-            </div>
+        <aside class="hero-stats" aria-label="Snabbstatistik">
+          <div class="stat">
+            <div class="stat-num" id="stat-users">0</div>
+            <div class="stat-label">Active Users</div>
           </div>
-        </div>
+          <div class="stat">
+            <div class="stat-num" id="stat-plans">0</div>
+            <div class="stat-label">Plans Generated</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num" id="stat-exercises">80+</div>
+            <div class="stat-label">Exercises Available</div>
+          </div>
+        </aside>
       </div>
     </section>
 
     <!-- ONBOARDING WIZARD -->
-    <section id="onboarding" class="panel" aria-live="polite">
+    <section id="onboarding" class="panel" aria-labelledby="onboard-title">
       <form id="onboard-form" class="wizard" novalidate>
-        <h2>Berätta om dig</h2>
-        <div class="stepper" aria-hidden>
-          <div class="steps" id="steps"></div>
-        </div>
+        <h2 id="onboard-title">Let's Personalize Your Training</h2>
+        <p class="small">We build your plan using science-backed calculations.</p>
 
-        <!-- STEP 1: Basic -->
+        <div class="steps" id="steps" aria-hidden="false"></div>
+
+        <!-- Steps (fieldsets) -->
         <fieldset class="step" data-step="1">
-          <legend>Basic</legend>
-          <label>
-            Full name
-            <input id="name" name="name" type="text" placeholder="Anna Andersson" required>
+          <legend>Basic Information</legend>
+          <label>Full name
+            <input type="text" name="name" placeholder="Anna Andersson" required />
           </label>
-          <label>
-            Email
-            <input id="email" name="email" type="email" placeholder="anna@example.com" required>
+
+          <label>Email
+            <input type="email" name="email" placeholder="anna@example.com" required />
           </label>
+
           <div class="row">
-            <label>
-              Age
-              <input id="age" name="age" type="number" min="12" max="100" placeholder="22" required>
+            <label>Age
+              <input type="number" name="age" min="12" max="100" required />
             </label>
-            <label>
-              Gender
-              <select id="gender" name="gender" required>
-                <option value="">Välj</option>
+            <label>Gender
+              <select name="gender" required>
+                <option value="">Select</option>
                 <option value="female">Female</option>
                 <option value="male">Male</option>
                 <option value="nonbinary">Non-binary</option>
-                <option value="other">Other / Prefer not to say</option>
+                <option value="other">Other</option>
               </select>
             </label>
           </div>
+
           <div class="wizard-controls">
-            <button type="button" class="btn ghost" id="prev-1" disabled>Back</button>
+            <button type="button" class="btn ghost prev-btn" disabled>Back</button>
             <button type="button" class="btn primary next-btn" data-next="2">Next</button>
           </div>
         </fieldset>
 
-        <!-- STEP 2: Body metrics -->
         <fieldset class="step" data-step="2">
-          <legend>Body metrics</legend>
+          <legend>Body Metrics</legend>
           <div class="row">
-            <label>
-              Height (cm)
-              <input id="height" name="height" type="number" min="100" max="250" placeholder="175" required>
+            <label>Height (cm)
+              <input type="number" name="height" required />
             </label>
-            <label>
-              Weight (kg)
-              <input id="weight" name="weight" type="number" min="30" max="300" placeholder="68" required>
+            <label>Weight (kg)
+              <input type="number" name="weight" required />
             </label>
           </div>
-          <label>
-            Body fat percentage (optional)
-            <input id="bodyFat" name="bodyFat" type="number" min="3" max="60" placeholder="">
+
+          <label>Body Fat % (optional)
+            <input type="number" name="bodyFat" />
           </label>
+
           <div class="wizard-controls">
             <button type="button" class="btn ghost prev-btn" data-prev="1">Back</button>
             <button type="button" class="btn primary next-btn" data-next="3">Next</button>
           </div>
         </fieldset>
 
-        <!-- STEP 3: Lifestyle / Activity -->
         <fieldset class="step" data-step="3">
           <legend>Lifestyle</legend>
-          <label>
-            How would you describe your daily activity?
-            <select id="lifestyle" name="lifestyle" required>
+
+          <label>Daily Activity Level
+            <select name="lifestyle" required>
               <option value="">Select</option>
-              <option value="sedentary">Sedentary (desk job)</option>
-              <option value="light">Lightly active</option>
-              <option value="moderate">Moderately active</option>
+              <option value="sedentary">Sedentary</option>
+              <option value="light">Lightly Active</option>
+              <option value="moderate">Moderately Active</option>
               <option value="active">Active</option>
             </select>
           </label>
 
-          <label>
-            Sleep (avg hours / night)
-            <input id="sleep" name="sleep" type="number" min="3" max="12" step="0.5" placeholder="7.5" required>
+          <label>Sleep per night (hours)
+            <input type="number" name="sleep" step="0.5" min="0" max="24" required />
           </label>
 
-          <label>
-            Any chronic conditions or injuries? (optional)
-            <textarea id="injuries" name="injuries" placeholder="Knee pain, lower back etc."></textarea>
+          <label>Injuries / Notes
+            <textarea name="injuries" placeholder="Knee pain, lower back issues, etc."></textarea>
           </label>
 
           <div class="wizard-controls">
@@ -156,38 +143,35 @@
           </div>
         </fieldset>
 
-        <!-- STEP 4: Goals & Preferences -->
         <fieldset class="step" data-step="4">
-          <legend>Goals & Preferences</legend>
-          <label>
-            Primary goal
-            <select id="goal" name="goal" required>
+          <legend>Goals & Training Preferences</legend>
+
+          <label>Primary Goal
+            <select name="goal" required>
               <option value="">Select</option>
-              <option value="muscle">Build muscle</option>
-              <option value="fatloss">Lose fat</option>
-              <option value="strength">Increase strength</option>
-              <option value="endurance">Improve endurance</option>
-              <option value="general">General health & mobility</option>
+              <option value="muscle">Build Muscle</option>
+              <option value="strength">Increase Strength</option>
+              <option value="fatloss">Lose Fat</option>
+              <option value="endurance">Improve Endurance</option>
+              <option value="general">General Health</option>
             </select>
           </label>
 
-          <label>
-            Training experience
-            <select id="experience" name="experience" required>
+          <label>Experience Level
+            <select name="experience" required>
               <option value="">Select</option>
-              <option value="beginner">Beginner (0-6 months)</option>
-              <option value="intermediate">Intermediate (6-24 months)</option>
-              <option value="advanced">Advanced (2+ years)</option>
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
             </select>
           </label>
 
-          <label>
-            Preferred training style (checkboxes)
+          <label>Preferred Training Style
             <div class="checkbox-row">
-              <label><input type="checkbox" name="style" value="gym"> Gym / weights</label>
-              <label><input type="checkbox" name="style" value="home"> Home bodyweight</label>
-              <label><input type="checkbox" name="style" value="cardio"> Cardio / HIIT</label>
-              <label><input type="checkbox" name="style" value="mobility"> Mobility / yoga</label>
+              <label><input type="checkbox" name="style" value="gym" /> Gym</label>
+              <label><input type="checkbox" name="style" value="home" /> Home</label>
+              <label><input type="checkbox" name="style" value="hiit" /> HIIT</label>
+              <label><input type="checkbox" name="style" value="mobility" /> Mobility</label>
             </div>
           </label>
 
@@ -197,23 +181,20 @@
           </div>
         </fieldset>
 
-        <!-- STEP 5: Equipment & Schedule -->
         <fieldset class="step" data-step="5">
-          <legend>Equipment & Schedule</legend>
-          <label>
-            Available equipment (select all that apply)
+          <legend>Schedule & Equipment</legend>
+
+          <label>Available Equipment
             <div class="checkbox-row">
-              <label><input type="checkbox" name="equipment" value="barbell"> Barbell</label>
-              <label><input type="checkbox" name="equipment" value="dumbbells"> Dumbbells</label>
-              <label><input type="checkbox" name="equipment" value="bands"> Resistance bands</label>
-              <label><input type="checkbox" name="equipment" value="none"> No equipment</label>
-              <label><input type="checkbox" name="equipment" value="bike"> Stationary bike</label>
+              <label><input type="checkbox" name="equipment" value="barbell" /> Barbell</label>
+              <label><input type="checkbox" name="equipment" value="dumbbells" /> Dumbbells</label>
+              <label><input type="checkbox" name="equipment" value="bands" /> Resistance Bands</label>
+              <label><input type="checkbox" name="equipment" value="none" /> No Equipment</label>
             </div>
           </label>
 
-          <label>
-            Which days can you train? (click to toggle)
-            <div class="weekday-row" role="group" aria-label="Training days">
+          <label>Training Days
+            <div class="weekday-row" role="group" aria-label="Välj träningdagar">
               <button type="button" class="weekday" data-day="mon">Mon</button>
               <button type="button" class="weekday" data-day="tue">Tue</button>
               <button type="button" class="weekday" data-day="wed">Wed</button>
@@ -224,9 +205,8 @@
             </div>
           </label>
 
-          <label>
-            Typical session length (minutes)
-            <input id="sessionLength" name="sessionLength" type="number" min="10" max="180" placeholder="60" required>
+          <label>Session Length (minutes)
+            <input type="number" name="sessionLength" min="20" max="180" required />
           </label>
 
           <div class="wizard-controls">
@@ -234,92 +214,91 @@
             <button type="submit" class="btn primary">Finish & Generate Plan</button>
           </div>
         </fieldset>
-
       </form>
     </section>
 
     <!-- DASHBOARD -->
-    <section id="dashboard" class="panel">
+    <section id="dashboard" class="panel" aria-labelledby="dash-title">
       <div class="dash-top">
         <div>
-          <h2 id="dash-title">Your workout plan</h2>
-          <p id="dash-sub">A tailored weekly plan generated from your onboarding (local demo)</p>
+          <h2 id="dash-title">Your Workout Plan</h2>
+          <p class="small">Generated from your personalized data</p>
         </div>
         <div class="dash-actions">
-          <button id="btn-edit-profile" class="btn ghost">Edit Profile</button>
-          <button id="btn-log-session" class="btn primary">Log Workout</button>
+          <button class="btn ghost" data-target="profile">Edit Profile</button>
+          <button class="btn primary" id="log-workout">Log Workout</button>
         </div>
       </div>
 
       <div class="dashboard-grid">
-        <!-- Plan -->
-        <div class="card" id="plan-card" aria-live="polite">
+        <div class="card">
           <h3>Weekly Plan</h3>
-          <div id="plan-calendar" class="plan-calendar"></div>
+          <div id="plan-calendar" class="plan-calendar" aria-live="polite"></div>
         </div>
 
-        <!-- Progress & Mini Chart -->
         <div class="card">
           <h3>Progress</h3>
           <div class="progress-block">
-            <canvas id="progress-chart" width="300" height="160" aria-label="Progress chart"></canvas>
+            <canvas id="progress-chart" width="350" height="180"></canvas>
             <div class="progress-summary">
               <div>Consistency: <strong id="consistency">—</strong></div>
-              <div>Workouts logged: <strong id="logged-count">0</strong></div>
+              <div>Workouts Logged: <strong id="logged-count">0</strong></div>
             </div>
           </div>
         </div>
 
-        <!-- AI Chat -->
         <div class="card">
-          <h3>AI Trainer</h3>
-          <div id="ai-chat" class="ai-chat">
-            <div id="ai-messages" class="ai-messages" role="log" aria-live="polite"></div>
+          <h3>Your AI Trainer</h3>
+          <div class="ai-chat">
+            <div id="ai-messages" class="ai-messages" aria-live="polite"></div>
             <div class="ai-input">
-              <input id="ai-input-text" type="text" aria-label="Ask AI" placeholder="Try: 'Make this easier' or 'Swap squat for lunges'">
+              <input id="ai-input-text" aria-label="Skriv till tränaren" placeholder="Ask your trainer anything..." />
               <button id="ai-send" class="btn primary">Send</button>
             </div>
           </div>
         </div>
 
-        <!-- Quick Actions -->
         <div class="card">
-          <h3>Quick actions</h3>
+          <h3>Quick Actions</h3>
           <div class="quick-actions">
-            <button id="btn-regenerate" class="btn">Regenerate plan</button>
-            <button id="btn-export-json" class="btn">Download JSON</button>
-            <button id="btn-clear" class="btn ghost">Reset demo</button>
+            <button class="btn" id="btn-regenerate">Regenerate Plan</button>
+            <button class="btn" id="btn-export-json">Download JSON</button>
+            <button class="btn ghost" id="btn-clear">Reset App</button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- PROFILE EDIT -->
-    <section id="profile" class="panel">
+    <!-- PROFILE -->
+    <section id="profile" class="panel" aria-labelledby="profile-title">
       <div class="card">
-        <h2>Profile</h2>
+        <h2 id="profile-title">Your Profile</h2>
         <form id="profile-form">
           <div class="row">
-            <label>Full name <input id="p_name" name="p_name" type="text"></label>
-            <label>Email <input id="p_email" name="p_email" type="email"></label>
+            <label>Full Name <input type="text" name="p_name" /></label>
+            <label>Email <input type="email" name="p_email" /></label>
           </div>
+
           <div class="row">
-            <label>Age <input id="p_age" name="p_age" type="number"></label>
-            <label>Gender <select id="p_gender" name="p_gender"><option value="">—</option></select></label>
+            <label>Age <input type="number" name="p_age" /></label>
+            <label>Gender <select name="p_gender"><option value="">—</option></select></label>
           </div>
-          <label>Notes / Injuries <textarea id="p_injuries" name="p_injuries"></textarea></label>
+
+          <label>Notes / Injuries
+            <textarea name="p_injuries"></textarea>
+          </label>
+
           <div class="form-actions">
-            <button id="profile-save" class="btn primary" type="button">Save profile</button>
-            <button id="profile-cancel" class="btn ghost" type="button">Cancel</button>
+            <button class="btn primary" id="profile-save" type="button">Save</button>
+            <button class="btn ghost" type="button" id="profile-cancel">Cancel</button>
           </div>
         </form>
       </div>
     </section>
 
-    <!-- FOOTER -->
-    <footer class="footer">
-      <div>SmartGym Demo — frontend-only • Saved to your browser (localStorage)</div>
-      <div>Made for a school project • Customize freely</div>
+    <footer class="footer" role="contentinfo">
+      <div>SmartGym © 2025 — Frontend Prototype</div>
+      <div>All data stored locally in your browser</div>
     </footer>
   </main>
 

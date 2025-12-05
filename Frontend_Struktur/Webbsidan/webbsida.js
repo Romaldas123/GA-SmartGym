@@ -1,395 +1,450 @@
-/* ===== SmartGym — App JS (connected, no email) =====
-   - Onboarding wizard
-   - LocalStorage profile save
-   - Plan generation (simple AI-like logic)
-   - AI chat (simulated)
-   - Export / Reset
-   - Small progress chart
+/* app.js — SmartGym frontend controller
+   - Wizard navigation & validation
+   - Plan generation & rendering
+   - Simple AI chat (local keyword-based)
+   - localStorage persistence
+   - Export / Reset / Regenerate
 */
 
-/* Utilities */
-const qs = (sel, ctx=document) => ctx.querySelector(sel);
-const qsa = (sel, ctx=document) => Array.from((ctx||document).querySelectorAll(sel));
+(() => {
+  // ---- Elements & state
+  const panels = document.querySelectorAll('.panel');
+  const navButtons = document.querySelectorAll('.nav-btn[data-target]');
+  const form = document.getElementById('onboard-form');
+  const steps = Array.from(document.querySelectorAll('fieldset.step'));
+  const stepsContainer = document.getElementById('steps');
+  const planCalendar = document.getElementById('plan-calendar');
+  const aiMessages = document.getElementById('ai-messages');
+  const aiInput = document.getElementById('ai-input-text');
+  const aiSend = document.getElementById('ai-send');
+  const btnRegenerate = document.getElementById('btn-regenerate');
+  const btnExport = document.getElementById('btn-export-json');
+  const btnClear = document.getElementById('btn-clear');
+  const tryDemo = document.getElementById('try-demo');
+  const toggleTheme = document.getElementById('toggle-theme');
+  const statUsers = document.getElementById('stat-users');
+  const statPlans = document.getElementById('stat-plans');
+  const statExercises = document.getElementById('stat-exercises');
+  const loggedCount = document.getElementById('logged-count');
+  const consistencyEl = document.getElementById('consistency');
 
-/* Panel navigation */
-const panels = qsa('.panel');
-const navButtons = qsa('.nav-btn');
+  // App state
+  let wizardStep = 0; // index in steps
+  let profile = {};   // saved user data and plan
+  let plansGenerated = 0;
+  let usersCount = Number(localStorage.getItem('smartgym_users')) || 1;
 
-function showPanel(id) {
-  panels.forEach(p => (p.id === id) ? p.classList.add('active') : p.classList.remove('active'));
-  const el = document.getElementById(id);
-  if (el) el.focus({preventScroll:true});
-  history.replaceState({panel:id}, '', '#'+id);
-}
+  // Init
+  function init() {
+    attachNav();
+    buildStepDots();
+    bindWizardButtons();
+    restoreFromStorage();
+    renderStats();
+    renderPanelById('home');
+    attachWizardSubmission();
+    attachAI();
+    attachQuickActions();
+    attachTryDemo();
+    attachThemeToggle();
+    renderPlan(); // if any
+  }
 
-/* Wire nav */
-navButtons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    const target = (btn.getAttribute('aria-controls') || '').trim();
-    if (target) showPanel(target);
-    if (btn.id === 'nav-export') exportJSON();
-  });
-});
+  // NAVIGATION between panels
+  function attachNav() {
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.target;
+        renderPanelById(target);
+      });
+    });
 
-/* Handle back/forward */
-window.addEventListener('popstate', (ev) => {
-  const state = ev.state;
-  if (state && state.panel) showPanel(state.panel);
-});
+    // delegate buttons that have data-target in page
+    document.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-target]');
+      if (target) {
+        const id = target.dataset.target;
+        renderPanelById(id);
+      }
+    });
+  }
 
-/* Start at hash if present */
-if (location.hash) {
-  const id = location.hash.replace('#','');
-  if (document.getElementById(id)) showPanel(id);
-}
+  function renderPanelById(id) {
+    panels.forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById(id);
+    if (panel) panel.classList.add('active');
+    // small accessibility focus
+    panel?.querySelector('input,button,select,textarea')?.focus();
+  }
 
-/* CTA */
-qs('#cta-start').addEventListener('click', () => showPanel('onboarding'));
-qs('#cta-try').addEventListener('click', () => {
-  generateExamplePlan();
-  showPanel('dashboard');
-});
+  // WIZARD helpers
+  function buildStepDots() {
+    stepsContainer.innerHTML = '';
+    steps.forEach((s, idx) => {
+      const d = document.createElement('div');
+      d.className = 'step-dot';
+      d.textContent = idx + 1;
+      if (idx === wizardStep) d.classList.add('active');
+      stepsContainer.appendChild(d);
+    });
+    showStep(wizardStep);
+  }
 
-/* --- Onboarding wizard --- */
-const form = qs('#onboard-form');
-const steps = qsa('fieldset.step');
-const stepsWrap = qs('#steps');
-
-// Build stepper UI
-steps.forEach((s, i) => {
-  const dot = document.createElement('div');
-  dot.className = 'step-dot';
-  dot.textContent = (i+1);
-  stepsWrap.appendChild(dot);
-});
-
-let currentStep = 0;
-function showStep(index) {
-  steps.forEach((s, i) => s.style.display = (i === index) ? 'block' : 'none');
-  currentStep = index;
-  qsa('#steps .step-dot').forEach((d, i) => d.style.opacity = (i <= index) ? '1' : '0.45');
-}
-showStep(0);
-
-/* Step controls (next/prev) */
-qsa('.next-btn').forEach(b => b.addEventListener('click', () => {
-  if (currentStep < steps.length - 1) showStep(currentStep + 1);
-}));
-qsa('.prev-btn').forEach(b => b.addEventListener('click', () => {
-  const prev = parseInt(b.getAttribute('data-prev'), 10) - 1;
-  if (!isNaN(prev)) showStep(prev);
-}));
-
-/* Weekday toggle */
-qsa('.weekday').forEach(btn => btn.addEventListener('click', () => btn.classList.toggle('active')));
-
-/* Form submission -> commit profile and generate plan */
-const STORAGE_KEY = 'smartgym_profile_v1';
-
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const data = collectForm();
-  saveProfile(data);
-  showPanel('dashboard');
-});
-
-/* Collect form data into object */
-function collectForm() {
-  const data = {};
-  const fm = new FormData(form);
-  for (const [k, v] of fm.entries()) {
-    if (data[k]) {
-      if (!Array.isArray(data[k])) data[k] = [data[k]];
-      data[k].push(v);
-    } else {
-      data[k] = v;
+  function showStep(index) {
+    steps.forEach((s, i) => {
+      s.style.display = i === index ? 'block' : 'none';
+    });
+    // update dots
+    const dots = stepsContainer.children;
+    for (let i = 0; i < dots.length; i++) {
+      dots[i].classList.toggle('active', i === index);
     }
   }
-  // training days
-  const days = qsa('.weekday.active').map(b => b.getAttribute('data-day'));
-  data.trainingDays = days;
-  return data;
-}
 
-/* Save/load profile */
-function saveProfile(profile) {
-  profile.updatedAt = new Date().toISOString();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-  loadProfileToUI(profile);
-  generatePlanFromProfile(profile);
-  updateStats();
-}
-
-function loadProfile() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try { return JSON.parse(raw); } catch(e) { return null; }
-}
-
-function clearProfile() {
-  localStorage.removeItem(STORAGE_KEY);
-  location.reload();
-}
-
-/* Profile edit handlers */
-const profileSave = qs('#profile-save');
-const profileCancel = qs('#profile-cancel');
-
-profileSave.addEventListener('click', () => {
-  const p = {
-    name: qs('#p_name').value || '',
-    email: qs('#p_email').value || '',
-    age: qs('#p_age').value || '',
-    gender: qs('#p_gender').value || '',
-    notes: qs('#p_injuries').value || ''
-  };
-  saveProfile(p);
-  showPanel('dashboard');
-});
-profileCancel.addEventListener('click', () => showPanel('dashboard'));
-
-function loadProfileToUI(profile) {
-  if (!profile) return;
-  qs('#p_name').value = profile.name || '';
-  qs('#p_email').value = profile.email || '';
-  qs('#p_age').value = profile.age || '';
-  qs('#p_gender').value = profile.gender || '';
-  qs('#p_injuries').value = profile.notes || '';
-  qs('#dash-title').textContent = (profile.name ? profile.name + "'s workout plan" : 'Your workout plan');
-}
-
-/* Edit profile button */
-qs('#btn-edit-profile').addEventListener('click', () => {
-  const p = loadProfile();
-  if (p) showPanel('profile');
-  else alert('No profile saved yet. Start onboarding first.');
-});
-
-/* --- Plan generation (simple AI simulation) --- */
-const planCalendar = qs('#plan-calendar');
-let currentPlan = null;
-
-function generatePlanFromProfile(profile) {
-  const goal = profile.goal || 'general';
-  const experience = profile.experience || 'beginner';
-  const days = (profile.trainingDays && profile.trainingDays.length > 0) ? profile.trainingDays : ['mon', 'wed', 'fri'];
-
-  const baseExercises = {
-    strength: ['Squat', 'Bench Press', 'Deadlift', 'Overhead Press', 'Row'],
-    muscle: ['Squat', 'Romanian Deadlift', 'Bench Press', 'Pull-ups', 'Lunges'],
-    fatloss: ['Circuit: Kettlebell', 'Burpees', 'Rowing', 'Bike Intervals', 'Jump Rope'],
-    endurance: ['Run', 'Tempo Run', 'Bike Intervals', 'Swim', 'Rowing'],
-    general: ['Full Body: Squat', 'Push', 'Pull', 'Core', 'Mobility']
-  };
-
-  const bucket = baseExercises[goal] || baseExercises['general'];
-
-  const plan = days.map((d, i) => {
-    const dayName = dayKeyToName(d, i);
-    const title = (i % 2 === 0) ? 'Strength Focus' : 'Conditioning';
-    const count = 3 + (experience === 'advanced' ? 2 : 0);
-    const exercises = bucket.slice(0, count).map((ex, idx) => {
-      const reps = experience === 'beginner' ? (8 + idx*2) + ' x 3' : (5 + idx*2) + ' x 4';
-      return { name: ex, reps };
+  function bindWizardButtons() {
+    // next buttons
+    document.querySelectorAll('.next-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const next = Math.min(wizardStep + 1, steps.length - 1);
+        if (validateStep(wizardStep)) {
+          wizardStep = next;
+          showStep(wizardStep);
+        }
+      });
     });
-    return { dayKey: d, dayName, title, exercises };
-  });
 
-  currentPlan = { generatedAt: new Date().toISOString(), plan };
-  renderPlan(currentPlan);
-
-  // attach to profile storage
-  const prof = loadProfile() || {};
-  prof.lastPlan = currentPlan;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(prof));
-}
-
-
-function dayKeyToName(key, i) {
-  const map = { mon:'Mon', tue:'Tue', wed:'Wed', thu:'Thu', fri:'Fri', sat:'Sat', sun:'Sun' };
-  return map[key] || ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i % 7] || key;
-}
-
-function renderPlan(planObj) {
-  planCalendar.innerHTML = '';
-  if (!planObj || !planObj.plan) return;
-  planObj.plan.forEach(block => {
-    const d = document.createElement('div');
-    d.className = 'plan-day';
-    d.innerHTML = `<h4>${capitalize(block.dayName)}</h4><div class="small">${block.title}</div>`;
-    const ul = document.createElement('ul'); ul.className = 'plan-list';
-    block.exercises.forEach(e => {
-      const li = document.createElement('li');
-      li.textContent = e.name + ' — ' + e.reps;
-      ul.appendChild(li);
+    // prev buttons
+    document.querySelectorAll('.prev-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        wizardStep = Math.max(0, wizardStep - 1);
+        showStep(wizardStep);
+      });
     });
-    d.appendChild(ul);
-    planCalendar.appendChild(d);
-  });
-}
 
-function generateExamplePlan() {
-  const example = {
-    generatedAt: new Date().toISOString(),
-    plan: [
-      { dayKey:'mon', dayName:'Mon', title:'Full Body', exercises:[{name:'Squat',reps:'5 x 5'},{name:'Pushup',reps:'3 x 10'},{name:'Plank',reps:'3 x 60s'}]},
-      { dayKey:'wed', dayName:'Wed', title:'Cardio', exercises:[{name:'Run',reps:'30 min'},{name:'Core',reps:'3 sets'}]},
-      { dayKey:'fri', dayName:'Fri', title:'Lower Body', exercises:[{name:'Deadlift',reps:'5 x 3'},{name:'Lunge',reps:'3 x 10'}]}
-    ]
-  };
-  currentPlan = example;
-  renderPlan(currentPlan);
-}
-
-/* helper */
-function capitalize(s) { if (!s) return ''; return s.charAt(0).toUpperCase() + s.slice(1); }
-
-/* --- AI Chat (simulated) --- */
-const aiInput = qs('#ai-input-text');
-const aiSend = qs('#ai-send');
-const aiMessages = qs('#ai-messages');
-let loggedCount = 0;
-
-aiSend.addEventListener('click', () => handleAiSend());
-aiInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleAiSend(); });
-
-function handleAiSend() {
-  const text = aiInput.value.trim();
-  if (!text) return;
-  appendAiMsg(text, 'user');
-  aiInput.value = '';
-  setTimeout(() => {
-    const reply = simpleAiReply(text);
-    appendAiMsg(reply, 'ai');
-  }, 400 + Math.random()*800);
-}
-
-function appendAiMsg(text, who) {
-  const div = document.createElement('div');
-  div.className = 'ai-msg ' + (who === 'user' ? 'user' : 'ai');
-  div.textContent = text;
-  aiMessages.appendChild(div);
-  aiMessages.scrollTop = aiMessages.scrollHeight;
-}
-
-function simpleAiReply(msg) {
-  const lower = msg.toLowerCase();
-  if (lower.includes('swap') || lower.includes('instead')) return 'Sure — I can swap exercises. Which one do you prefer as a replacement?';
-  if (lower.includes('easier') || lower.includes('reduce')) return 'No problem — we can reduce volume and lower intensity. Try cutting 1 set per exercise.';
-  if (lower.includes('hard') || lower.includes('tough')) return 'If it feels too tough, drop the weight, increase rest, or switch to regressions.';
-  if (lower.includes('diet') || lower.includes('nutrition')) return 'Aim for a protein-rich meal after workouts. 1.6-2.2 g/kg protein is a good target for many trainees.';
-  if (lower.includes('sleep')) return 'Sleep 7-9 hours/night where possible — it aids recovery and strength gains.';
-  if (lower.includes('progress') || lower.includes('tracking')) return 'Log workouts consistently. I calculate consistency based on logged sessions vs scheduled sessions.';
-  if (lower.includes('hello') || lower.includes('hi')) return 'Hej! Hur kan jag hjälpa dig med ditt träningsschema idag?';
-  const fallbacks = [
-    'Bra fråga — jag rekommenderar att vi börjar med ditt huvudsakliga mål och anpassar volymen efter erfarenhet.',
-    'Vill du ha ett enklare 3-dagars schema eller ett mer detaljerat 5-dagars schema?',
-    'Tips: Håll progressiva överbelastningsprinciper i åtanke. Öka antingen reps eller vikt över tid.'
-  ];
-  return fallbacks[Math.floor(Math.random() * fallbacks.length)];
-}
-
-/* --- Progress chart (simple canvas) --- */
-const chart = qs('#progress-chart');
-const ctx = chart.getContext('2d');
-
-function drawChart(logged) {
-  ctx.clearRect(0, 0, chart.width, chart.height);
-  const w = chart.width, h = chart.height;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0,0,w,h);
-  // grid lines
-  ctx.fillStyle = '#eee';
-  for (let i=0;i<5;i++) ctx.fillRect(0, h - (i+1)*(h/5), w, 1);
-  // bars
-  const data = (logged && logged.length) ? logged : Array.from({length:7}).map(()=> Math.round(Math.random()*2));
-  const barW = (w - 20) / data.length;
-  data.forEach((v,i) => {
-    const barH = (h - 30) * Math.min(1, v / 3);
-    ctx.fillStyle = 'rgba(6,182,212,0.9)';
-    ctx.fillRect(10 + i*barW, h - barH - 10, barW*0.8, barH);
-  });
-}
-
-drawChart();
-
-/* Log workout */
-qs('#btn-log-session').addEventListener('click', () => {
-  loggedCount++;
-  qs('#logged-count').textContent = loggedCount;
-  qs('#consistency').textContent = Math.min(100, Math.round((loggedCount / 3) * 100)) + '%';
-  const prof = loadProfile() || {};
-  prof.loggedCount = loggedCount;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(prof));
-  drawChart();
-});
-
-/* Regenerate */
-qs('#btn-regenerate').addEventListener('click', () => {
-  const prof = loadProfile();
-  if (!prof) return alert('No profile — complete onboarding first.');
-  generatePlanFromProfile(prof);
-  alert('Plan regenerated using your saved profile.');
-});
-
-/* Export / Reset */
-function exportJSON() {
-  const prof = loadProfile();
-  const blob = new Blob([JSON.stringify(prof || {generatedAt:new Date().toISOString()}, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'smartgym_profile.json';
-  a.click();
-  setTimeout(()=> URL.revokeObjectURL(url), 2000);
-}
-qs('#btn-export-json').addEventListener('click', exportJSON);
-qs('#btn-clear').addEventListener('click', ()=> {
-  if (confirm('Reset demo and clear saved profile?')) clearProfile();
-});
-
-/* Update small stats & load initial */
-function updateStats() {
-  const p = loadProfile();
-  if (p && p.lastPlan) renderPlan(p.lastPlan);
-  if (p && p.loggedCount) qs('#logged-count').textContent = p.loggedCount;
-  qs('#stat-users').textContent = 'Demo';
-  qs('#stat-plans').textContent = (p && p.lastPlan) ? 1 : '—';
-  qs('#stat-exercises').textContent = 120;
-}
-
-(function init() {
-  const p = loadProfile();
-  if (p) {
-    loadProfileToUI(p);
-    if (p.lastPlan) renderPlan(p.lastPlan);
-  } else {
-    qs('#stat-users').textContent = 'Demo';
-    qs('#stat-plans').textContent = '—';
-    qs('#stat-exercises').textContent = '—';
+    // weekday toggles
+    document.querySelectorAll('.weekday').forEach(btn => {
+      btn.addEventListener('click', () => btn.classList.toggle('active'));
+    });
   }
+
+  function validateStep(index) {
+    const inputs = Array.from(steps[index].querySelectorAll('input,select,textarea')).filter(i => i.required);
+    for (let i of inputs) {
+      if (!i.value) {
+        i.focus();
+        i.classList.add('invalid');
+        setTimeout(() => i.classList.remove('invalid'), 800);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function attachWizardSubmission() {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      // final validation across all steps
+      for (let i = 0; i < steps.length; i++) {
+        wizardStep = i;
+        showStep(wizardStep);
+        if (!validateStep(i)) return;
+      }
+      // collect data
+      const data = new FormData(form);
+      profile = formDataToProfile(data);
+      profile.trainingDays = Array.from(document.querySelectorAll('.weekday.active')).map(b => b.dataset.day);
+      profile.generatedAt = new Date().toISOString();
+      profile.plan = generatePlan(profile);
+      plansGenerated++;
+      localStorage.setItem('smartgym_profile', JSON.stringify(profile));
+      localStorage.setItem('smartgym_plans_generated', String(plansGenerated));
+      usersCount = Number(localStorage.getItem('smartgym_users')) || usersCount;
+      renderStats();
+      renderPlan();
+      renderPanelById('dashboard');
+      flashMessage('Plan generated — good luck!');
+    });
+  }
+
+  function formDataToProfile(fd) {
+    const out = {};
+    for (let [k, v] of fd.entries()) {
+      if (out[k]) {
+        // multiple checkboxes -> array
+        out[k] = [].concat(out[k], v);
+      } else {
+        out[k] = v;
+      }
+    }
+    // collect checkboxes for style & equipment
+    out.style = Array.from(form.querySelectorAll('input[name="style"]:checked')).map(i => i.value);
+    out.equipment = Array.from(form.querySelectorAll('input[name="equipment"]:checked')).map(i => i.value);
+    return out;
+  }
+
+  // PLAN generation (simple but adaptive)
+  function generatePlan(p) {
+    // Basic adaptive rough plan: choose split depending on days & goal
+    const days = p.trainingDays && p.trainingDays.length ? p.trainingDays.length : 3;
+    const goal = (p.goal || 'general').toLowerCase();
+    const experience = (p.experience || 'beginner').toLowerCase();
+
+    const week = [];
+    const exercises = sampleExercises();
+
+    // Heuristic: if few days -> full body; more days -> split
+    if (days <= 3) {
+      for (let i = 0; i < days; i++) {
+        week.push({
+          name: `Day ${i + 1}`,
+          focus: 'Full Body',
+          sets: experience === 'beginner' ? '3x8-10' : '4x6-8',
+          moves: pickMoves(exercises, 6)
+        });
+      }
+    } else {
+      // 4-6 day splits
+      const splits = ['Upper Body', 'Lower Body', 'Push', 'Pull', 'Legs', 'Full Body'];
+      for (let i = 0; i < days; i++) {
+        const focus = splits[i % splits.length];
+        week.push({
+          name: `Day ${i + 1}`,
+          focus,
+          sets: experience === 'beginner' ? '3x8-12' : '4x5-8',
+          moves: pickMoves(exercises, 5)
+        });
+      }
+    }
+
+    // small adjustments by goal
+    if (goal.includes('fat') || goal.includes('loss')) {
+      week.forEach(d => d.cardio = '15-25 min moderate');
+    } else if (goal.includes('endurance') || goal.includes('cardio')) {
+      week.forEach(d => d.cardio = '25-40 min varied');
+    } else if (goal.includes('strength')) {
+      week.forEach(d => d.warmup = '5-10 min mobility; heavy sets at lower reps');
+    }
+
+    return week;
+  }
+
+  // sample exercise bank (expandable)
+  function sampleExercises() {
+    return [
+      'Squat', 'Deadlift', 'Bench Press', 'Overhead Press', 'Barbell Row',
+      'Pull-up/Chin-up', 'Dumbbell Press', 'Lunge', 'Romanian Deadlift',
+      'Hip Thrust', 'Plank', 'Hanging Leg Raise', 'Farmer Carry',
+      'Face Pull', 'Banded Pull-apart', 'Kettlebell Swing', 'Burpee'
+    ];
+  }
+
+  function pickMoves(bank, n) {
+    const copy = bank.slice();
+    const out = [];
+    for (let i = 0; i < n && copy.length; i++) {
+      const idx = Math.floor(Math.random() * copy.length);
+      out.push(copy.splice(idx, 1)[0]);
+    }
+    return out;
+  }
+
+  // Render plan to DOM
+  function renderPlan() {
+    planCalendar.innerHTML = '';
+    const prof = JSON.parse(localStorage.getItem('smartgym_profile') || 'null') || profile;
+    const plan = prof && prof.plan ? prof.plan : null;
+    if (!plan) {
+      planCalendar.innerHTML = '<p class="muted">No plan yet — generate one to see your weekly schedule.</p>';
+      return;
+    }
+    plan.forEach(day => {
+      const d = document.createElement('div');
+      d.className = 'plan-day';
+      d.innerHTML = `<h4>${escapeHtml(day.name)}</h4>
+        <div><strong>${escapeHtml(day.focus)}</strong></div>
+        <div class="small">Sets: ${escapeHtml(day.sets || '')}</div>
+        <ul class="plan-list">${day.moves.map(m => `<li>${escapeHtml(m)}</li>`).join('')}</ul>
+        ${day.cardio ? `<div class="small">Cardio: ${escapeHtml(day.cardio)}</div>` : ''}
+      `;
+      planCalendar.appendChild(d);
+    });
+    // update progress/dash
+    const logged = Number(localStorage.getItem('smartgym_logged')) || 0;
+    loggedCount.textContent = String(logged);
+    const consistency = Math.min(100, Math.round((logged / (plan.length || 1)) * 100));
+    consistencyEl.textContent = consistency + '%';
+  }
+
+  // AI Chat (simple keyword-based)
+  function attachAI() {
+    aiSend.addEventListener('click', handleSend);
+    aiInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleSend();
+    });
+    // welcome message
+    pushAiMessage("Hi! I'm your trainer — ask me about workouts, nutrition, recovery, or generating a new plan.");
+  }
+
+  function handleSend() {
+    const txt = aiInput.value.trim();
+    if (!txt) return;
+    pushUserMessage(txt);
+    aiInput.value = '';
+    setTimeout(() => {
+      const reply = generateAIReply(txt);
+      pushAiMessage(reply);
+    }, 500);
+  }
+
+  function pushUserMessage(txt) {
+    const div = document.createElement('div');
+    div.className = 'ai-msg user';
+    div.textContent = txt;
+    aiMessages.appendChild(div);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+  }
+
+  function pushAiMessage(txt) {
+    const div = document.createElement('div');
+    div.className = 'ai-msg ai';
+    div.textContent = txt;
+    aiMessages.appendChild(div);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+  }
+
+  function generateAIReply(message) {
+    const m = message.toLowerCase();
+    const rules = [
+      { keys: ['exercise','workout','train','program'], reply: 'Combine compound lifts with accessory work; track progress, and progressively overload.' },
+      { keys: ['diet','calorie','eat','nutrition'], reply: 'Aim for a slight calorie surplus for muscle gain, calorie deficit for fat loss; keep protein high (~1.6–2.2 g/kg).' },
+      { keys: ['rest','recovery','sleep'], reply: 'Prioritize 7–9h sleep, manage stress, and include at least one rest day per week.' },
+      { keys: ['hiit','cardio'], reply: 'HIIT can be efficient for conditioning; combine with strength sessions a few times/week.' },
+      { keys: ['plan','generate','regenerate'], reply: 'You can regenerate your plan from the dashboard — I will adapt sets and focus based on your inputs.' },
+      { keys: ['hello','hi','hej'], reply: 'Hej! Vad vill du veta om träning idag?' }
+    ];
+    for (let r of rules) {
+      if (r.keys.some(k => m.includes(k))) return r.reply;
+    }
+    return "Good question — be specific (goal, days/week, equipment) and I'll help.";
+  }
+
+  // Quick actions
+  function attachQuickActions() {
+    btnRegenerate.addEventListener('click', () => {
+      const prof = JSON.parse(localStorage.getItem('smartgym_profile') || 'null');
+      if (!prof) return flashMessage('No profile to regenerate from.');
+      prof.plan = generatePlan(prof);
+      localStorage.setItem('smartgym_profile', JSON.stringify(prof));
+      plansGenerated++;
+      localStorage.setItem('smartgym_plans_generated', String(plansGenerated));
+      renderPlan();
+      renderStats();
+      flashMessage('Plan regenerated.');
+    });
+
+    btnExport.addEventListener('click', () => {
+      const prof = JSON.parse(localStorage.getItem('smartgym_profile') || 'null') || profile;
+      if (!prof) return flashMessage('Nothing to export.');
+      const blob = new Blob([JSON.stringify(prof, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `smartgym_profile_${(new Date()).toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    btnClear.addEventListener('click', () => {
+      if (!confirm('Reset app and clear all local data?')) return;
+      localStorage.removeItem('smartgym_profile');
+      localStorage.removeItem('smartgym_plans_generated');
+      localStorage.removeItem('smartgym_logged');
+      localStorage.setItem('smartgym_users', String(Math.max(1, usersCount)));
+      profile = {};
+      plansGenerated = 0;
+      renderPlan();
+      renderStats();
+      renderPanelById('home');
+      flashMessage('App reset.');
+    });
+
+    document.getElementById('log-workout')?.addEventListener('click', () => {
+      const logged = Number(localStorage.getItem('smartgym_logged')) || 0;
+      localStorage.setItem('smartgym_logged', String(logged + 1));
+      renderPlan();
+      flashMessage('Workout logged ✅');
+    });
+  }
+
+  function attachTryDemo() {
+    tryDemo?.addEventListener('click', () => {
+      // simple demo profile
+      profile = {
+        name: 'Demo User',
+        goal: 'general',
+        experience: 'beginner',
+        trainingDays: ['mon','wed','fri'],
+      };
+      profile.plan = generatePlan(profile);
+      localStorage.setItem('smartgym_profile', JSON.stringify(profile));
+      plansGenerated++;
+      localStorage.setItem('smartgym_plans_generated', String(plansGenerated));
+      renderPlan();
+      renderPanelById('dashboard');
+      flashMessage('Demo plan generated');
+    });
+  }
+
+  // Theme toggle
+  function attachThemeToggle() {
+    toggleTheme?.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      const pressed = document.documentElement.classList.contains('dark');
+      toggleTheme.setAttribute('aria-pressed', String(pressed));
+      toggleTheme.textContent = pressed ? 'Light' : 'Dark';
+    });
+  }
+
+  // Persistence
+  function restoreFromStorage() {
+    const stored = JSON.parse(localStorage.getItem('smartgym_profile') || 'null');
+    if (stored) profile = stored;
+    plansGenerated = Number(localStorage.getItem('smartgym_plans_generated')) || plansGenerated;
+    usersCount = Number(localStorage.getItem('smartgym_users')) || usersCount;
+  }
+
+  function renderStats() {
+    statUsers.textContent = String(usersCount);
+    statPlans.textContent = String(plansGenerated);
+    statExercises.textContent = '80+';
+  }
+
+  // Small helpers
+  function flashMessage(txt = '', ms = 1800) {
+    const el = document.createElement('div');
+    el.className = 'flash';
+    el.textContent = txt;
+    el.style.position = 'fixed';
+    el.style.right = '18px';
+    el.style.bottom = '18px';
+    el.style.background = 'linear-gradient(90deg,#0ea5a5,#06b6d4)';
+    el.style.color = '#fff';
+    el.style.padding = '10px 14px';
+    el.style.borderRadius = '10px';
+    el.style.boxShadow = '0 8px 20px rgba(2,6,23,0.2)';
+    document.body.appendChild(el);
+    setTimeout(() => el.style.opacity = '0', ms - 200);
+    setTimeout(() => el.remove(), ms);
+  }
+
+  function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  // Simple XSS-safe download utility already provided above
+
+  // Init app
+  init();
+
 })();
-
-/* Live-save draft when onboarding changes */
-qs('#onboard-form').addEventListener('change', () => {
-  const draft = collectForm();
-  localStorage.setItem('smartgym_draft', JSON.stringify(draft));
-});
-
-/* Keyboard shortcuts for demo */
-window.addEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.key === '1') showPanel('home');
-  if (e.ctrlKey && e.key === '2') showPanel('onboarding');
-  if (e.ctrlKey && e.key === '3') showPanel('dashboard');
-});
-
-/* Sync nav font weight with active panel */
-function syncNav() {
-  panels.forEach(p => {
-    const id = p.id;
-    const btn = qsa('.nav-btn').find(b => b.getAttribute('aria-controls') === id);
-    if (btn) btn.style.fontWeight = p.classList.contains('active') ? '800' : '600';
-  });
-}
-new MutationObserver(syncNav).observe(document.body, {attributes:true, subtree:true, attributeFilter:['class']});
-
-
