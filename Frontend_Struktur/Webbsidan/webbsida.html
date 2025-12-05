@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="sv">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -15,49 +15,58 @@
         <small>AI-driven personalized workouts</small>
       </div>
     </div>
-    <nav class="topnav">
-      <button id="nav-home" class="nav-btn">Home</button>
-      <button id="nav-onboard" class="nav-btn">Onboarding</button>
-      <button id="nav-dashboard" class="nav-btn">Dashboard</button>
-      <button id="nav-profile" class="nav-btn">Profile</button>
+    <nav class="topnav" role="navigation" aria-label="Main navigation">
+      <button id="nav-home" class="nav-btn" aria-controls="home">Home</button>
+      <button id="nav-onboard" class="nav-btn" aria-controls="onboarding">Onboarding</button>
+      <button id="nav-dashboard" class="nav-btn" aria-controls="dashboard">Dashboard</button>
+      <button id="nav-profile" class="nav-btn" aria-controls="profile">Profile</button>
       <button id="nav-export" class="nav-btn">Export</button>
     </nav>
   </header>
 
   <main id="app" class="container">
     <!-- HOME / HERO -->
-    <section id="home" class="panel active">
+    <section id="home" class="panel active" tabindex="-1">
       <div class="hero-grid">
         <div class="hero-card">
           <h2>Personalized training. Real results.</h2>
-          <p>SmartGym analyzes your profile and builds a progressive, realistic plan — and adapts when you log workouts or ask for changes.</p>
+          <p>SmartGym analyserar din profil och bygger en progressiv, realistisk plan — och anpassar sig när du loggar pass eller ber om förändringar.</p>
           <div class="cta-row">
-            <button id="cta-start" class="btn primary">Start Onboarding</button>
-            <button id="cta-try" class="btn ghost">Try Sample Plan</button>
+            <button id="cta-start" class="btn primary">Starta onboarding</button>
+            <button id="cta-try" class="btn ghost">Prova exempelplan</button>
+          </div>
+
+          <div class="features">
+            <div class="chip">AI-driven</div>
+            <div class="chip">Personligt schema</div>
+            <div class="chip">Spara lokalt</div>
           </div>
         </div>
-        <div class="hero-stats">
-          <div class="stat">
-            <div class="stat-num" id="stat-users">—</div>
-            <div class="stat-label">Active demo users</div>
-          </div>
-          <div class="stat">
-            <div class="stat-num" id="stat-plans">—</div>
-            <div class="stat-label">Generated plans</div>
-          </div>
-          <div class="stat">
-            <div class="stat-num" id="stat-exercises">—</div>
-            <div class="stat-label">Exercises in DB</div>
+
+        <div>
+          <div class="hero-stats">
+            <div class="stat center">
+              <div class="stat-num" id="stat-users">—</div>
+              <div class="stat-label">Active demo users</div>
+            </div>
+            <div class="stat center">
+              <div class="stat-num" id="stat-plans">—</div>
+              <div class="stat-label">Generated plans</div>
+            </div>
+            <div class="stat center">
+              <div class="stat-num" id="stat-exercises">—</div>
+              <div class="stat-label">Exercises in DB</div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ONBOARDING WIZARD -->
-    <section id="onboarding" class="panel">
+    <section id="onboarding" class="panel" aria-live="polite">
       <form id="onboard-form" class="wizard" novalidate>
-        <h2>Tell us about you</h2>
-        <div class="stepper">
+        <h2>Berätta om dig</h2>
+        <div class="stepper" aria-hidden>
           <div class="steps" id="steps"></div>
         </div>
 
@@ -66,21 +75,21 @@
           <legend>Basic</legend>
           <label>
             Full name
-            <input name="name" type="text" placeholder="Anna Andersson" required>
+            <input id="name" name="name" type="text" placeholder="Anna Andersson" required>
           </label>
           <label>
             Email
-            <input name="email" type="email" placeholder="anna@example.com" required>
+            <input id="email" name="email" type="email" placeholder="anna@example.com" required>
           </label>
           <div class="row">
             <label>
               Age
-              <input name="age" type="number" min="12" max="100" placeholder="22" required>
+              <input id="age" name="age" type="number" min="12" max="100" placeholder="22" required>
             </label>
             <label>
               Gender
-              <select name="gender" required>
-                <option value="">Select</option>
+              <select id="gender" name="gender" required>
+                <option value="">Välj</option>
                 <option value="female">Female</option>
                 <option value="male">Male</option>
                 <option value="nonbinary">Non-binary</option>
@@ -100,16 +109,16 @@
           <div class="row">
             <label>
               Height (cm)
-              <input name="height" type="number" min="100" max="250" placeholder="175" required>
+              <input id="height" name="height" type="number" min="100" max="250" placeholder="175" required>
             </label>
             <label>
               Weight (kg)
-              <input name="weight" type="number" min="30" max="300" placeholder="68" required>
+              <input id="weight" name="weight" type="number" min="30" max="300" placeholder="68" required>
             </label>
           </div>
           <label>
             Body fat percentage (optional)
-            <input name="bodyFat" type="number" min="3" max="60" placeholder="">
+            <input id="bodyFat" name="bodyFat" type="number" min="3" max="60" placeholder="">
           </label>
           <div class="wizard-controls">
             <button type="button" class="btn ghost prev-btn" data-prev="1">Back</button>
@@ -122,7 +131,7 @@
           <legend>Lifestyle</legend>
           <label>
             How would you describe your daily activity?
-            <select name="lifestyle" required>
+            <select id="lifestyle" name="lifestyle" required>
               <option value="">Select</option>
               <option value="sedentary">Sedentary (desk job)</option>
               <option value="light">Lightly active</option>
@@ -133,12 +142,12 @@
 
           <label>
             Sleep (avg hours / night)
-            <input name="sleep" type="number" min="3" max="12" step="0.5" placeholder="7.5" required>
+            <input id="sleep" name="sleep" type="number" min="3" max="12" step="0.5" placeholder="7.5" required>
           </label>
 
           <label>
             Any chronic conditions or injuries? (optional)
-            <textarea name="injuries" placeholder="Knee pain, lower back etc."></textarea>
+            <textarea id="injuries" name="injuries" placeholder="Knee pain, lower back etc."></textarea>
           </label>
 
           <div class="wizard-controls">
@@ -152,7 +161,7 @@
           <legend>Goals & Preferences</legend>
           <label>
             Primary goal
-            <select name="goal" required>
+            <select id="goal" name="goal" required>
               <option value="">Select</option>
               <option value="muscle">Build muscle</option>
               <option value="fatloss">Lose fat</option>
@@ -164,7 +173,7 @@
 
           <label>
             Training experience
-            <select name="experience" required>
+            <select id="experience" name="experience" required>
               <option value="">Select</option>
               <option value="beginner">Beginner (0-6 months)</option>
               <option value="intermediate">Intermediate (6-24 months)</option>
@@ -217,7 +226,7 @@
 
           <label>
             Typical session length (minutes)
-            <input name="sessionLength" type="number" min="10" max="180" placeholder="60" required>
+            <input id="sessionLength" name="sessionLength" type="number" min="10" max="180" placeholder="60" required>
           </label>
 
           <div class="wizard-controls">
@@ -265,7 +274,7 @@
         <div class="card">
           <h3>AI Trainer</h3>
           <div id="ai-chat" class="ai-chat">
-            <div id="ai-messages" class="ai-messages"></div>
+            <div id="ai-messages" class="ai-messages" role="log" aria-live="polite"></div>
             <div class="ai-input">
               <input id="ai-input-text" type="text" aria-label="Ask AI" placeholder="Try: 'Make this easier' or 'Swap squat for lunges'">
               <button id="ai-send" class="btn primary">Send</button>
@@ -285,22 +294,22 @@
       </div>
     </section>
 
-    <!-- PROFILE EDIT (modal-like section) -->
+    <!-- PROFILE EDIT -->
     <section id="profile" class="panel">
       <div class="card">
         <h2>Profile</h2>
         <form id="profile-form">
           <div class="row">
-            <label>Full name <input name="p_name" type="text"></label>
-            <label>Email <input name="p_email" type="email"></label>
+            <label>Full name <input id="p_name" name="p_name" type="text"></label>
+            <label>Email <input id="p_email" name="p_email" type="email"></label>
           </div>
           <div class="row">
-            <label>Age <input name="p_age" type="number"></label>
-            <label>Gender <select name="p_gender"><option value="">—</option></select></label>
+            <label>Age <input id="p_age" name="p_age" type="number"></label>
+            <label>Gender <select id="p_gender" name="p_gender"><option value="">—</option></select></label>
           </div>
-          <label>Notes / Injuries <textarea name="p_injuries"></textarea></label>
+          <label>Notes / Injuries <textarea id="p_injuries" name="p_injuries"></textarea></label>
           <div class="form-actions">
-            <button id="profile-save" class="btn primary">Save profile</button>
+            <button id="profile-save" class="btn primary" type="button">Save profile</button>
             <button id="profile-cancel" class="btn ghost" type="button">Cancel</button>
           </div>
         </form>
