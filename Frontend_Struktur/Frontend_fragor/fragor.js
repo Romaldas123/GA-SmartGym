@@ -7,8 +7,8 @@ const questions = [
   {type:"alert", key:"ai_alert", message:"AI vill nu ha mer detaljerad information. Svara noggrant på följande frågor."},
   {type:"radio", key:"experience_level", label:"Träningserfarenhet", options:["Ingen erfarenhet","< 6 månader","6 månader – 2 år","2–5 år","5+ år"]},
   {type:"text", key:"experience_details", label:"Beskriv erfaranheter mer detaljerat (valfritt)", placeholder:"Ex: Jag har tränat styrketräning 3 gånger/vecka i 2 år...", optional:true},
-  {type:"radio", key:"health_status", label:"Hälsa", options:["Nej","Ja, mindre skada","Ja, större skada","Medicinskt tillstånd som påverkar träning"]},
-  {type:"text", key:"health_details", label:"Beskriv häsla mer detaljerat (valfritt)", placeholder:"Ex: Jag har ont i vänster knä vid löpning...", optional:true},
+  {type:"radio", key:"health_status", label:"Skador?", options:["Nej","Ja, mindre skada","Ja, större skada","Medicinskt tillstånd som påverkar träning"]},
+  {type:"text", key:"health_details", label:"Beskriv hälsa mer detaljerat (valfritt)", placeholder:"Ex: Jag har ont i vänster knä vid löpning...", optional:true},
   {type:"checkbox", key:"main_goal", label:"Träningsmål (välj flera)", options:["Bygga muskler","Förbättra kondition","Bli starkare","Förbättra rörlighet"]},
   {type:"text", key:"goal_details", label:"Beskriv målet mer i detalj (valfritt)", placeholder:"Ex: Jag vill bygga mer överkroppsmuskler...", optional:true}
 ];
@@ -35,7 +35,7 @@ function showQuestion() {
   const q = questions[current];
 
   if(q.type === "alert"){
-    aiNotice.innerHTML = `<span>AI vill ha lite mer detaljerade svar, försök att svara så detaljerat som möjligt.</span> <button id="aiOkBtn">Jag förstår</button>`;
+    aiNotice.innerHTML = `<span>${q.message}</span> <button id="aiOkBtn">Jag förstår</button>`;
     aiNotice.classList.remove("hidden");
 
     document.getElementById("aiOkBtn").addEventListener("click", ()=>{
@@ -154,7 +154,7 @@ function saveAnswer(q,input){
   }
 }
 
-// Visa alla svar och skicka till PHP med vanlig POST
+// Visa alla svar och skicka till PHP med FormData
 function finishQuestions(){
   container.classList.add("hidden");
   output.classList.remove("hidden");
@@ -176,17 +176,18 @@ function finishQuestions(){
     }
   }
 
- fetch('../../Backend_Struktur/fragor.php', {
-  method: 'POST',
-  body: formData
-})
-
+  fetch('../../Backend_Struktur/fragor.php', {
+    method: 'POST',
+    body: formData
+  })
   .then(response => response.json())
   .then(data => {
     if(data.status === "success"){
       console.log("Svar sparade i DB!");
+      alert("Dina svar har sparats!");
     } else {
       console.error("Fel vid sparande: ", data.message);
+      console.error("POST-data: ", data.post_data);
       alert("Kunde inte spara svaren: " + data.message);
     }
   })
