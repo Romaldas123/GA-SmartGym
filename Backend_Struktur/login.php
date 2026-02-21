@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $_SESSION['user_id'] = $id;
                 $_SESSION['user_name'] = $name;
                
-                header("Location: ../Frontend_Struktur/Webbsidan/webbsida.html");
+                header("Location: ../Frontend_Struktur/Webbsidan/struktur/struktur.php");
                 exit();
             } else {
                 echo "Fel lösenord!";
