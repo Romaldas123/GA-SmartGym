@@ -1,44 +1,124 @@
 /* =========================
-   GA SmartGym - STRUKTUR / Startsida CSS
+   GA SmartGym - Struktur CSS
    ========================= */
 
-main {
-  max-width: 1200px;
-  margin: 40px auto;
-  padding: 0 20px;
-  color: #e5e7eb;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: #111827;
+    color: #e5e7eb;
 }
 
-main h1 {
-  font-size: 28px;
-  margin-bottom: 10px;
+/* HERO SECTION */
+.hero {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+    background: linear-gradient(135deg, #111827, #1f2937);
+    text-align: center;
+    padding: 0 20px;
 }
 
-main p {
-  font-size: 16px;
-  margin-bottom: 20px;
-  color: rgba(229, 231, 235, 0.8);
+.hero-content h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
 }
 
-.quick-links {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-top: 20px;
+.hero-content p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.quick-links .nav-link {
-  padding: 12px 20px;
-  border-radius: 14px;
-  background: rgba(34, 197, 94, 0.2);
-  color: #22c55e;
-  font-weight: 600;
-  text-decoration: none;
-  transition: 0.2s ease;
+.hero-buttons .btn-primary,
+.hero-buttons .btn-secondary {
+    padding: 16px 32px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: bold;
+    margin: 0 10px;
+    transition: 0.3s;
 }
 
-.quick-links .nav-link:hover {
-  background: rgba(34, 197, 94, 0.35);
-  transform: translateY(-2px);
+.btn-primary {
+    background-color: #22c55e;
+    color: #05110a;
+}
+
+.btn-primary:hover {
+    background-color: #16a34a;
+}
+
+.btn-secondary {
+    background-color: #1f2937;
+    color: #e5e7eb;
+    border: 2px solid #22c55e;
+}
+
+.btn-secondary:hover {
+    background-color: #22c55e;
+    color: #05110a;
+}
+
+/* FEATURES SECTION */
+.features {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    padding: 60px 20px;
+    background-color: #1f2937;
+}
+
+.feature {
+    background-color: #111827;
+    border-radius: 16px;
+    padding: 30px;
+    flex: 1 1 250px;
+    max-width: 300px;
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.feature:hover {
+    transform: translateY(-8px);
+}
+
+.feature h2 {
+    margin-bottom: 12px;
+}
+
+.feature p {
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+}
+
+.btn-feature {
+    display: inline-block;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background-color: #22c55e;
+    color: #05110a;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.btn-feature:hover {
+    background-color: #16a34a;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .hero-content h1 {
+        font-size: 2.2rem;
+    }
+
+    .features {
+        flex-direction: column;
+        align-items: center;
+    }
 }
