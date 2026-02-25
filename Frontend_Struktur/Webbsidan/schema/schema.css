@@ -1,0 +1,42 @@
+/* =========================
+   GA SmartGym - Schema CSS
+   ========================= */
+
+.schema-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.schema-container h1 {
+    margin-bottom: 25px;
+}
+
+.days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.day-btn {
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: none;
+    background: #1f2937;
+    color: #e5e7eb;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.day-btn:hover {
+    background: #22c55e;
+    color: #05110a;
+}
+
+.day-content {
+    background: #111827;
+    padding: 20px;
+    border-radius: 16px;
+    min-height: 120px;
+}
