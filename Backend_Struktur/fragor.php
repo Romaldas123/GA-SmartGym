@@ -70,6 +70,7 @@ $stmt->bind_param(
     $goal_details
 );
 
+
 // Kör SQL
 if ($stmt->execute()) {
     echo json_encode(["status" => "success", "message" => "Svar sparade!"]);

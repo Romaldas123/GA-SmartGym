@@ -1,5 +1,9 @@
 <?php
-session_start(); // Viktigt för att kunna använda sessioner
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../../Backend_Struktur/login.php");
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -15,15 +19,19 @@ session_start(); // Viktigt för att kunna använda sessioner
 
 <?php include '../Header/header.html'; ?>
 
-<main>
-    <h1>Schema</h1>
-    <p>Här kan användarens träningsschema visas.</p>
+<main class="schema-container">
+    <h1>Veckoschema</h1>
 
-    <!-- Snabbknappar eller sektioner kan läggas till här -->
-    <div class="quick-links">
-        <a href="#" class="nav-link">Måndag</a>
-        <a href="#" class="nav-link">Tisdag</a>
-        <a href="#" class="nav-link">Onsdag</a>
+    <div class="days">
+        <button class="day-btn" data-day="Måndag">Måndag</button>
+        <button class="day-btn" data-day="Tisdag">Tisdag</button>
+        <button class="day-btn" data-day="Onsdag">Onsdag</button>
+        <button class="day-btn" data-day="Torsdag">Torsdag</button>
+        <button class="day-btn" data-day="Fredag">Fredag</button>
+    </div>
+
+    <div id="dayContent" class="day-content">
+        Välj en dag för att se träningspass.
     </div>
 </main>
 
@@ -32,6 +40,5 @@ session_start(); // Viktigt för att kunna använda sessioner
 <script src="../Header/header.js"></script>
 <script src="schema.js"></script>
 <script src="../footer/footer.js"></script>
-
 </body>
 </html>

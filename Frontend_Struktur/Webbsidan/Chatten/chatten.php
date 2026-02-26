@@ -1,5 +1,9 @@
 <?php
-session_start(); // Viktigt för sessioner och användarnamn
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../../Backend_Struktur/login.php");
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -15,17 +19,17 @@ session_start(); // Viktigt för sessioner och användarnamn
 
 <?php include '../Header/header.html'; ?>
 
-<main>
-    <h1>Chat (AI)</h1>
-    <p>Här kan användaren chatta med AI-assistenten.</p>
+<main class="chat-container">
+    <h1>Chat (AI Coach)</h1>
 
-    <!-- Exempel på chat-box -->
-    <div id="chatBox">
+    <div id="chatBox" class="chat-box">
         <div class="message bot">Hej! Hur kan jag hjälpa dig med träningen idag?</div>
     </div>
 
-    <input type="text" id="chatInput" placeholder="Skriv meddelande...">
-    <button id="sendBtn">Skicka</button>
+    <div class="chat-input-area">
+        <input type="text" id="chatInput" placeholder="Skriv ditt meddelande...">
+        <button id="sendBtn">Skicka</button>
+    </div>
 </main>
 
 <?php include '../footer/footer.html'; ?>
@@ -33,6 +37,5 @@ session_start(); // Viktigt för sessioner och användarnamn
 <script src="../Header/header.js"></script>
 <script src="chatten.js"></script>
 <script src="../footer/footer.js"></script>
-
 </body>
 </html>
