@@ -8,6 +8,11 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_name = $_SESSION['user_name'] ?? "Medlem";
 
+// Initialize chat history if it doesn't exist
+if (!isset($_SESSION['chat_history'])) {
+    $_SESSION['chat_history'] = [];
+}
+
 // Handle AJAX requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
     header('Content-Type: application/json');
@@ -19,10 +24,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
         exit;
     }
 
-    // OpenAI API Key (ERSÄTT MED DIN NYCKEL)
+    // Add user message to chat history
+    $_SESSION['chat_history'][] = [
+        'role' => 'user',
+        'content' => $userMessage
+    ];
+
+    // OpenRouter API Key
     $apiKey = "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"; 
     
-    $ch = curl_init('https://api.openai.com/v1/chat/completions');
+    // Build messages for API call
+    $messages = [
+        [
+            'role' => 'system',
+            'content' => 'Du är en professionell träningscoach för GA SmartGym. Du hjälper med träningsprogram, kostrådgivning, motivation och återhämtning. Du svarar på svenska och ger praktiska, användbara tips. Fokusera på styrketräning och fitness.'
+        ]
+    ];
+
+    // Merge previous messages from session
+    $messages = array_merge($messages, $_SESSION['chat_history']);
+
+    $ch = curl_init('https://openrouter.ai/api/v1/chat/completions');
     
     curl_setopt_array($ch, [
         CURLOPT_HTTPHEADER => [
@@ -32,16 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => json_encode([
             'model' => 'openrouter/free',
-            'messages' => [
-                [
-                    'role' => 'system',
-                    'content' => 'Du är en professionell träningscoach för GA SmartGym. Du hjälper med träningsprogram, kostrådgivning, motivation och återhämtning. Du svarar på svenska och ger praktiska, användbara tips. Fokusera på styrketräning och fitness.'
-                ],
-                [
-                    'role' => 'user',
-                    'content' => $userMessage
-                ]
-            ],
+            'messages' => $messages,
             'temperature' => 0.7,
             'max_tokens' => 500
         ]),
@@ -56,6 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
     if ($httpCode === 200) {
         $data = json_decode($response, true);
         $aiMessage = $data['choices'][0]['message']['content'] ?? 'Något gick fel';
+
+        // Add AI response to chat history
+        $_SESSION['chat_history'][] = [
+            'role' => 'assistant',
+            'content' => $aiMessage
+        ];
+
         echo json_encode(['success' => true, 'message' => $aiMessage]);
     } else {
         $error = json_decode($response, true);
