@@ -3,10 +3,14 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 session_start();
 
+// Sätt headern så att webbläsaren vet att vi skickar JSON
+header('Content-Type: application/json');
+
 // Anslut till databasen
 $conn = new mysqli("localhost", "root", "", "ga_project");
 if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    echo json_encode(["status" => "error", "message" => "Databasfel: " . $conn->connect_error]);
+    exit();
 }
 
 // Kolla om POST skickats
@@ -24,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->store_result();
 
         if ($stmt->num_rows > 0) {
-            echo "E-postadressen används redan!";
+            echo json_encode(["status" => "error", "message" => "E-postadressen används redan!"]);
         } else {
             // Hasha lösenordet
             $passwordHash = password_hash($password, PASSWORD_DEFAULT);
@@ -39,20 +43,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $_SESSION['user_id'] = $user_id;
                 $_SESSION['user_name'] = $name;
 
-                // Skicka vidare till fragor.html
-                header("Location: ../Frontend_Struktur/frontend_fragor/fragor.html");
-                exit();
+                // Svara med success så JS kan visa popup och sedan skicka vidare användaren
+                echo json_encode(["status" => "success"]);
             } else {
-                echo "Fel: " . $stmt->error;
+                echo json_encode(["status" => "error", "message" => "Fel vid registrering: " . $stmt->error]);
             }
         }
 
         $stmt->close();
     } else {
-        echo "Alla fält måste fyllas i!";
+        echo json_encode(["status" => "error", "message" => "Alla fält måste fyllas i!"]);
     }
 }
 
 $conn->close();
 ?>
-
