@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const popupMessage = document.getElementById("popupMessage");
   const closePopup = document.getElementById("closePopup");
 
-  // Växla formulär
+  // Växla flikar
   registerTab.addEventListener("click", () => {
     registerTab.classList.add("active");
     loginTab.classList.remove("active");
@@ -24,7 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
     registerForm.classList.remove("active");
   });
 
-  // Popup funktion
   function showPopup(title, message) {
     popupTitle.textContent = title;
     popupMessage.textContent = message;
@@ -35,10 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
     popupOverlay.classList.remove("active");
   });
 
-  // Stoppa vanlig submit
+  // REGISTRERING
   registerForm.addEventListener("submit", function(e) {
     e.preventDefault();
-
     const formData = new FormData(registerForm);
 
     fetch("../../Backend_Struktur/register.php", {
@@ -48,14 +46,42 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(response => response.json())
     .then(data => {
       if (data.status === "error") {
-        showPopup("E-post upptagen", data.message);
+        showPopup("Ojsan!", data.message);
       } else if (data.status === "success") {
-        showPopup("Konto skapat!", "Ditt konto har registrerats.");
+        showPopup("Konto skapat!", "Skickar dig vidare till frågorna...");
+        
         registerForm.reset();
+
+        // VIKTIGT: Här ändrar vi sökvägen baserat på din mappstruktur
+        // ../ backar ut en mapp, sedan går vi in i Frontend_fragor
+        setTimeout(() => {
+          window.location.href = "../Frontend_fragor/fragor.html"; 
+        }, 5000);
       }
     })
-    .catch(() => {
-      showPopup("Fel", "Något gick fel. Försök igen.");
+    .catch(err => {
+      console.error("Fel:", err);
+      showPopup("Systemfel", "Kunde inte kontakta servern.");
     });
+  });
+
+  // INLOGGNING
+  loginForm.addEventListener("submit", function(e) {
+    e.preventDefault();
+    const formData = new FormData(loginForm);
+
+    fetch("../../Backend_Struktur/login.php", {
+      method: "POST",
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === "success") {
+        window.location.href = "../Frontend_fragor/fragor.html";
+      } else {
+        showPopup("Fel", data.message);
+      }
+    })
+    .catch(() => showPopup("Fel", "Inloggningen misslyckades."));
   });
 });
