@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     popupOverlay.classList.remove("active");
   });
 
-  // REGISTRERING
+  // REGISTRERING - Skickar användaren till onboarding-frågorna
   registerForm.addEventListener("submit", function(e) {
     e.preventDefault();
     const formData = new FormData(registerForm);
@@ -48,15 +48,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data.status === "error") {
         showPopup("Ojsan!", data.message);
       } else if (data.status === "success") {
-        showPopup("Konto skapat!", "Skickar dig vidare till frågorna...");
+        showPopup("Konto skapat!", "Välkommen! Nu ska vi bara ställa in din profil...");
         
         registerForm.reset();
 
-        // VIKTIGT: Här ändrar vi sökvägen baserat på din mappstruktur
-        // ../ backar ut en mapp, sedan går vi in i Frontend_fragor
+        // Skickar till fragor.html för nya användare
         setTimeout(() => {
           window.location.href = "../Frontend_fragor/fragor.html"; 
-        }, 5000);
+        }, 2000);
       }
     })
     .catch(err => {
@@ -65,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // INLOGGNING
+  // INLOGGNING - Skickar användaren direkt till webbsidan (struktur.php)
   loginForm.addEventListener("submit", function(e) {
     e.preventDefault();
     const formData = new FormData(loginForm);
@@ -74,14 +73,26 @@ document.addEventListener("DOMContentLoaded", () => {
       method: "POST",
       body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) throw new Error("Serverfel");
+        return response.json();
+    })
     .then(data => {
       if (data.status === "success") {
-        window.location.href = "../Frontend_fragor/fragor.html";
+        showPopup("Inloggad!", "Välkommen nigga tillbaka, skickar dig till din sida...");
+        
+        // Här ändrar vi till sökvägen för din huvudsida
+        setTimeout(() => {
+          window.location.href = "../Webbsidan/Header/header.html";
+        }, 1500);
+
       } else {
-        showPopup("Fel", data.message);
+        showPopup("Fel", data.message || "Fel e-post eller lösenord.");
       }
     })
-    .catch(() => showPopup("Fel", "Inloggningen misslyckades."));
+    .catch(err => {
+      console.error("Inloggningsfel:", err);
+      showPopup("Fel", "Inloggningen misslyckades. Kontrollera din anslutning eller login.php.");
+    });
   });
 });
