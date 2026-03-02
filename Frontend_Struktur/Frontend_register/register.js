@@ -79,11 +79,11 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .then(data => {
       if (data.status === "success") {
-        showPopup("Inloggad!", "Välkommen nigga tillbaka, skickar dig till din sida...");
+        showPopup("Inloggad!", "Välkommen tillbaka, skickar dig till din sida...");
         
         // Här ändrar vi till sökvägen för din huvudsida
         setTimeout(() => {
-          window.location.href = "../Webbsidan/Header/header.html";
+          window.location.href = "../Webbsidan/struktur/struktur.php";
         }, 1500);
 
       } else {

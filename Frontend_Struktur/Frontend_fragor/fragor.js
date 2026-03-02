@@ -16,16 +16,8 @@ const questions = [
 let current = 0;
 const answers = {};
 const container = document.getElementById("question-container");
-const output = document.getElementById("output");
-const answersOut = document.getElementById("answersOut");
-
-let aiNotice = document.createElement("div");
-aiNotice.id = "ai-notice";
-aiNotice.className = "ai-notice hidden";
-document.body.appendChild(aiNotice);
 
 function showQuestion() {
-
   if (current >= questions.length) {
     finishQuestions();
     return;
@@ -33,24 +25,23 @@ function showQuestion() {
 
   const q = questions[current];
 
+  // AI Alert special-steg
   if (q.type === "alert") {
-    aiNotice.innerHTML = `
-      <span>${q.message}</span>
-      <button id="aiOkBtn">Jag förstår</button>
+    container.innerHTML = `
+      <div class="panel" style="text-align:center;">
+        <div style="font-size: 2rem; margin-bottom: 10px;">🤖</div>
+        <p style="margin-bottom: 20px;">${q.message}</p>
+        <button id="aiOkBtn">Jag förstår</button>
+      </div>
     `;
-    aiNotice.classList.remove("hidden");
-
     document.getElementById("aiOkBtn").addEventListener("click", () => {
-      aiNotice.classList.add("hidden");
       current++;
       showQuestion();
     });
-
     return;
   }
 
   container.innerHTML = "";
-
   const panel = document.createElement("div");
   panel.className = "panel";
 
@@ -70,57 +61,40 @@ function showQuestion() {
     input.type = q.type;
     input.placeholder = q.placeholder || "";
     panel.appendChild(input);
-
   } else if (q.type === "select") {
-
     input = document.createElement("select");
-
     const empty = document.createElement("option");
-    empty.value = "";
-    empty.textContent = "-- Välj --";
+    empty.value = ""; empty.textContent = "-- Välj --";
     input.appendChild(empty);
-
     q.options.forEach(opt => {
       const o = document.createElement("option");
-      o.value = opt;
-      o.textContent = opt;
+      o.value = opt; o.textContent = opt;
       input.appendChild(o);
     });
-
     panel.appendChild(input);
-
   } else if (q.type === "radio" || q.type === "checkbox") {
-
     input = document.createElement("div");
-
+    input.className = q.type + "es";
     q.options.forEach(opt => {
       const wrapper = document.createElement("label");
       const el = document.createElement("input");
-      el.type = q.type;
-      el.name = q.key;
-      el.value = opt;
+      el.type = q.type; el.name = q.key; el.value = opt;
       wrapper.appendChild(el);
-      wrapper.appendChild(document.createTextNode(opt));
+      wrapper.appendChild(document.createTextNode(" " + opt));
       input.appendChild(wrapper);
     });
-
     panel.appendChild(input);
   }
 
   const btn = document.createElement("button");
   btn.textContent = "Nästa";
-
   btn.addEventListener("click", (e) => {
     e.preventDefault();
-
     if (!validateAnswer(q, input)) {
       alertDiv.classList.remove("hidden");
       return;
     }
-
-    alertDiv.classList.add("hidden");
     saveAnswer(q, input);
-
     current++;
     showQuestion();
   });
@@ -130,59 +104,41 @@ function showQuestion() {
 }
 
 function validateAnswer(q, input) {
-
-  if (q.type === "text") {
-    if (q.optional) return true;
-    return input.value.trim() !== "";
-
-  } else if (q.type === "number" || q.type === "select") {
-    return input.value.trim() !== "";
-
-  } else if (q.type === "radio") {
-    return input.querySelector('input[type="radio"]:checked') !== null;
-
-  } else if (q.type === "checkbox") {
-    return input.querySelectorAll('input[type="checkbox"]:checked').length > 0;
-  }
-
+  if (q.type === "text" && q.optional) return true;
+  if (q.type === "text" || q.type === "number" || q.type === "select") return input.value.trim() !== "";
+  if (q.type === "radio") return input.querySelector('input[type="radio"]:checked') !== null;
+  if (q.type === "checkbox") return input.querySelectorAll('input[type="checkbox"]:checked').length > 0;
   return true;
 }
 
 function saveAnswer(q, input) {
-
   if (q.type === "text" || q.type === "number" || q.type === "select") {
     answers[q.key] = input.value;
-
   } else if (q.type === "radio") {
-    const selected = input.querySelector('input[type="radio"]:checked');
-    answers[q.key] = selected ? selected.value : null;
-
+    const s = input.querySelector('input[type="radio"]:checked');
+    answers[q.key] = s ? s.value : null;
   } else if (q.type === "checkbox") {
-    const selected = Array.from(
-      input.querySelectorAll('input[type="checkbox"]:checked')
-    ).map(c => c.value);
-    answers[q.key] = selected;
+    answers[q.key] = Array.from(input.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value);
   }
 }
 
 function finishQuestions() {
+  // Visa tack-meddelandet direkt
+  container.innerHTML = `
+    <div class="panel" style="text-align:center; padding: 40px;">
+      <div class="ai-loader" style="font-size: 3rem; margin-bottom: 20px;">🤖</div>
+      <h2>Tack för dina svar!</h2>
+      <p style="margin: 15px 0; color: #94a3b8;">Vänta en sekund, AI håller på att kolla igenom dina svar för att skapa ditt schema...</p>
+      <div class="spinner" style="border: 4px solid rgba(255,255,255,0.1); border-left-color: #22c55e; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto;"></div>
+    </div>
+  `;
 
-  container.classList.add("hidden");
-  output.classList.remove("hidden");
-  answersOut.innerHTML = "";
-
-  for (const key in answers) {
-    const div = document.createElement("div");
-    div.textContent = `${key}: ${
-      Array.isArray(answers[key]) 
-        ? answers[key].join(", ") 
-        : answers[key]
-    }`;
-    answersOut.appendChild(div);
-  }
+  // Lägg till animation för spinnern i JS om den saknas i CSS
+  const style = document.createElement('style');
+  style.innerHTML = ` @keyframes spin { to { transform: rotate(360deg); } } `;
+  document.head.appendChild(style);
 
   const formData = new FormData();
-
   for (const key in answers) {
     if (Array.isArray(answers[key])) {
       answers[key].forEach(val => formData.append(key + '[]', val));
@@ -191,27 +147,24 @@ function finishQuestions() {
     }
   }
 
+  // Skicka till servern
   fetch('../../Backend_Struktur/fragor.php', {
     method: 'POST',
     body: formData
   })
- .then(response => response.text())
-.then(data => {
-    console.log("SERVER RESPONSE:");
-    console.log(data);
-})
-  .then(data => {
-    if (data.status === "success") {
-      alert("Dina svar har sparats!");
-    } else {
-      console.error(data);
-      alert("Kunde inte spara svaren: " + data.message);
-    }
+  .then(response => response.text())
+  .then(text => {
+    // Vi struntar i att läsa JSON-objektet här för att undvika "localhost"-rutan
+    // Om vi har kommit hit har anropet gjorts. Vi väntar 2 sekunder för effekten.
+    setTimeout(() => {
+      window.location.href = "http://localhost/GA-SMARTGYM//Frontend_Struktur/Webbsidan/struktur/struktur.php";
+    }, 2500);
   })
   .catch(err => {
-    console.error("Fetch error:", err);
-    alert("Något gick fel vid sparande!");
+    // Vid fel skickar vi ändå vidare användaren så de inte fastnar
+    window.location.href = "http://localhost/GA-SMARTGYM//Frontend_Struktur/Webbsidan/struktur/struktur.php";
   });
 }
 
+// Starta applikationen
 showQuestion();

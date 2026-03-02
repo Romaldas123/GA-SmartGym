@@ -1,90 +1,75 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Stoppa alla felmeddelanden från att skrivas ut som text (detta tar bort localhost-rutan)
+error_reporting(0);
+ini_set('display_errors', 0);
+
+// Starta buffring för att kunna rensa bort oväntade mellanslag
+ob_start();
 session_start();
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
-// Sätt en test-user om ingen är inloggad
-if (!isset($_SESSION['user_id'])) {
-    $_SESSION['user_id'] = 1; 
-}
-
-// Skapa databasanslutning
+// Databasanslutning
 $conn = new mysqli("localhost", "root", "", "ga_project");
+
 if ($conn->connect_error) {
-    echo json_encode(["status" => "error", "message" => "Connection failed: " . $conn->connect_error]);
+    ob_clean();
+    echo json_encode(["status" => "error", "message" => "DB-anslutning misslyckades"]);
     exit;
 }
 
-// Funktion för checkboxar / array-data
+// Tvinga UTF-8 för ÅÄÖ
+$conn->set_charset("utf8mb4");
+
+$user_id = $_SESSION['user_id'] ?? 1;
+
+// Funktion för att hantera arrayer (checkboxar) till JSON-strängar för DB
 function getPostArray($key) {
     if (isset($_POST[$key])) {
-        if (is_array($_POST[$key])) {
-            return json_encode($_POST[$key]);
-        } else {
-            return json_encode([$_POST[$key]]);
-        }
+        $data = is_array($_POST[$key]) ? $_POST[$key] : [$_POST[$key]];
+        return json_encode($data, JSON_UNESCAPED_UNICODE);
     }
     return json_encode([]);
 }
 
-// Hämta POST-data
-$user_id = $_SESSION['user_id'];
-$age = isset($_POST['age']) && $_POST['age'] !== "" ? (int)$_POST['age'] : 0;
-$weight = isset($_POST['weight']) && $_POST['weight'] !== "" ? (int)$_POST['weight'] : 0;
+// Hämta och sanera data
+$age = (int)($_POST['age'] ?? 0);
+$weight = (int)($_POST['weight'] ?? 0);
 $gender = $_POST['gender'] ?? "";
 $lifestyle = $_POST['lifestyle'] ?? "";
 $availability = getPostArray('availability');
-$main_goal = getPostArray('main_goal');
 $experience_level = $_POST['experience_level'] ?? "";
 $experience_details = $_POST['experience_details'] ?? "";
 $health_status = $_POST['health_status'] ?? "";
 $health_details = $_POST['health_details'] ?? "";
+$main_goal = getPostArray('main_goal');
 $goal_details = $_POST['goal_details'] ?? "";
 
-// Förbered SQL-sats
+// SQL-fråga
 $stmt = $conn->prepare("INSERT INTO user_answers 
     (user_id, age, weight, gender, lifestyle, availability, experience_level, experience_details, health_status, health_details, main_goal, goal_details)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-if (!$stmt) {
-    echo json_encode(["status" => "error", "message" => "SQL prepare failed: " . $conn->error]);
-    exit;
-}
-
-// Bind parametrar
-$stmt->bind_param(
-    "iissssssssss",
-    $user_id,
-    $age,
-    $weight,
-    $gender,
-    $lifestyle,
-    $availability,
-    $experience_level,
-    $experience_details,
-    $health_status,
-    $health_details,
-    $main_goal,
-    $goal_details
-);
-
-
-// Kör SQL
-if ($stmt->execute()) {
-    echo json_encode(["status" => "success", "message" => "Svar sparade!"]);
+if ($stmt) {
+    $stmt->bind_param("iissssssssss", 
+        $user_id, $age, $weight, $gender, $lifestyle, $availability, 
+        $experience_level, $experience_details, $health_status, $health_details, 
+        $main_goal, $goal_details
+    );
+    
+    // Rensa utskrifts-bufferten precis innan vi svarar
+    ob_clean();
+    
+    if ($stmt->execute()) {
+        echo json_encode(["status" => "success"]);
+    } else {
+        echo json_encode(["status" => "error", "message" => $stmt->error]);
+    }
+    $stmt->close();
 } else {
-    echo json_encode([
-        "status" => "error",
-        "message" => $stmt->error,
-        "post_data" => $_POST,
-        "availability" => $_POST['availability'] ?? null,
-        "main_goal" => $_POST['main_goal'] ?? null
-    ]);
+    ob_clean();
+    echo json_encode(["status" => "error", "message" => "Prepare failed"]);
 }
 
-// Stäng anslutningar
-$stmt->close();
 $conn->close();
-?>
+exit;
