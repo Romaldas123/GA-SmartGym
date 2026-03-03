@@ -13,15 +13,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $password = trim($_POST['password'] ?? '');
 
     if (!empty($email) && !empty($password)) {
-        $stmt = $conn->prepare("SELECT id, name, password FROM users WHERE email=?");
+        // --- ÄNDRAT: Vi hämtar även is_verified från databasen ---
+        $stmt = $conn->prepare("SELECT id, name, password, is_verified FROM users WHERE email=?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->store_result();
-        $stmt->bind_result($id, $name, $hash);
+        // --- ÄNDRAT: Binder resultatet till variabeln $is_verified ---
+        $stmt->bind_result($id, $name, $hash, $is_verified);
 
         if ($stmt->num_rows > 0) {
             $stmt->fetch();
             if(password_verify($password, $hash)){
+                
+                // --- NYTT: Spärr som kollar om kontot är verifierat ---
+                if ($is_verified == 0) {
+                    echo json_encode(["status" => "error", "message" => "Du måste verifiera din e-post innan du kan logga in!"]);
+                    exit; // Stoppar koden här så inloggningen avbryts
+                }
+                // ------------------------------------------------------
+
                 $_SESSION['user_id'] = $id;
                 $_SESSION['user_name'] = $name;
                 

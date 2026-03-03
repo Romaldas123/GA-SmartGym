@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginTab = document.getElementById("loginTab");
   const registerForm = document.getElementById("registerForm");
   const loginForm = document.getElementById("loginForm");
-  const footerNote = document.getElementById("footerNote"); // Referens till den nya texten
+  const footerNote = document.getElementById("footerNote");
 
   const popupOverlay = document.getElementById("popupOverlay");
   const popupTitle = document.getElementById("popupTitle");
@@ -16,8 +16,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loginTab.classList.remove("active");
     registerForm.classList.add("active");
     loginForm.classList.remove("active");
-    
-    // Ändra texten för registrering
     footerNote.textContent = "Genom att fortsätta går du vidare till SmartGyms onboarding-frågor.";
   });
 
@@ -26,8 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
     registerTab.classList.remove("active");
     loginForm.classList.add("active");
     registerForm.classList.remove("active");
-    
-    // Ändra texten för inloggning
     footerNote.textContent = "Genom att fortsätta går du vidare till din SmartGym webbsida.";
   });
 
@@ -41,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
     popupOverlay.classList.remove("active");
   });
 
-  // REGISTRERING - Skickar användaren till onboarding-frågorna
+  // REGISTRERING
   registerForm.addEventListener("submit", function(e) {
     e.preventDefault();
     const formData = new FormData(registerForm);
@@ -55,14 +51,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data.status === "error") {
         showPopup("Ojsan!", data.message);
       } else if (data.status === "success") {
-        showPopup("Konto skapat!", "Välkommen! Nu ska vi bara ställa in din profil...");
+        // ÄNDRAT: Nytt meddelande för att instruera om Gmail-verifiering
+        showPopup("Konto skapat!", "Vi har skickat en verifieringslänk till din Gmail. Klicka på den för att aktivera ditt konto!");
         
         registerForm.reset();
 
-        // Skickar till fragor.html för nya användare
+        // ÄNDRAT: Istället för att skicka till fragor.html, växla till login-fliken efter 4 sekunder
         setTimeout(() => {
-          window.location.href = "../Frontend_fragor/fragor.html"; 
-        }, 2000);
+          loginTab.click(); 
+          popupOverlay.classList.remove("active");
+        }, 4000); 
       }
     })
     .catch(err => {
@@ -71,7 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // INLOGGNING - Skickar användaren direkt till webbsidan (struktur.php)
+  // INLOGGNING
   loginForm.addEventListener("submit", function(e) {
     e.preventDefault();
     const formData = new FormData(loginForm);
@@ -88,18 +86,18 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data.status === "success") {
         showPopup("Inloggad!", "Välkommen tillbaka, skickar dig till din sida...");
         
-        // Här ändrar vi till sökvägen för din huvudsida
         setTimeout(() => {
           window.location.href = "../Webbsidan/struktur/struktur.php";
         }, 2000);
 
       } else {
+        // Här kommer nu även felmeddelandet "Du måste verifiera din e-post..." att visas om is_verified är 0
         showPopup("Fel", data.message || "Fel e-post eller lösenord.");
       }
     })
     .catch(err => {
       console.error("Inloggningsfel:", err);
-      showPopup("Fel", "Inloggningen misslyckades. Kontrollera din anslutning eller login.php.");
+      showPopup("Fel", "Inloggningen misslyckades. Kontrollera din anslutning.");
     });
   });
 });
