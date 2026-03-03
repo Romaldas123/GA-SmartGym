@@ -15,7 +15,6 @@
         <button id="loginTab" class="tab">Logga in</button>
       </div>
 
-      <!-- Registrering -->
       <form id="registerForm" class="form active" method="POST" action="../../Backend_Struktur/register.php">
         <h1>Skapa konto</h1>
         <p class="subtitle">Börja din resa med SmartGym</p>
@@ -25,7 +24,6 @@
         <button type="submit" class="btn">Registrera</button>
       </form>
 
-      <!-- Inloggning -->
       <form id="loginForm" class="form" method="POST" action="../../Backend_Struktur/login.php">
         <h1>Logga in</h1>
         <p class="subtitle">Välkommen tillbaka till SmartGym</p>
@@ -34,11 +32,11 @@
         <button type="submit" class="btn">Logga in</button>
       </form>
 
-      <p class="footer-text">Genom att fortsätta går du vidare till SmartGyms onboarding-frågor.</p>
+      <p id="footerNote" class="footer-text">Genom att fortsätta går du vidare till SmartGyms onboarding-frågor.</p>
     </div>
   </div>
   
-<div id="popupOverlay" class="popup-overlay">
+  <div id="popupOverlay" class="popup-overlay">
     <div class="popup-content">
       <h2 id="popupTitle"></h2>
       <p id="popupMessage"></p>
@@ -46,6 +44,6 @@
     </div>
   </div>
 
-    <script src="./register.js"></script>
+  <script src="./register.js"></script>
 </body>
 </html>

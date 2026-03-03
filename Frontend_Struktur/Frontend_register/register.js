@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginTab = document.getElementById("loginTab");
   const registerForm = document.getElementById("registerForm");
   const loginForm = document.getElementById("loginForm");
+  const footerNote = document.getElementById("footerNote"); // Referens till den nya texten
 
   const popupOverlay = document.getElementById("popupOverlay");
   const popupTitle = document.getElementById("popupTitle");
@@ -15,6 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
     loginTab.classList.remove("active");
     registerForm.classList.add("active");
     loginForm.classList.remove("active");
+    
+    // Ändra texten för registrering
+    footerNote.textContent = "Genom att fortsätta går du vidare till SmartGyms onboarding-frågor.";
   });
 
   loginTab.addEventListener("click", () => {
@@ -22,6 +26,9 @@ document.addEventListener("DOMContentLoaded", () => {
     registerTab.classList.remove("active");
     loginForm.classList.add("active");
     registerForm.classList.remove("active");
+    
+    // Ändra texten för inloggning
+    footerNote.textContent = "Genom att fortsätta går du vidare till din SmartGym webbsida.";
   });
 
   function showPopup(title, message) {
@@ -84,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Här ändrar vi till sökvägen för din huvudsida
         setTimeout(() => {
           window.location.href = "../Webbsidan/struktur/struktur.php";
-        }, 1500);
+        }, 2000);
 
       } else {
         showPopup("Fel", data.message || "Fel e-post eller lösenord.");

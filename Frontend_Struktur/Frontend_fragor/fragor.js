@@ -25,7 +25,6 @@ function showQuestion() {
 
   const q = questions[current];
 
-  // AI Alert special-steg
   if (q.type === "alert") {
     container.innerHTML = `
       <div class="panel" style="text-align:center;">
@@ -51,7 +50,7 @@ function showQuestion() {
 
   const alertDiv = document.createElement("div");
   alertDiv.className = "alert hidden";
-  alertDiv.textContent = "Vänligen fyll i eller välj något!";
+  alertDiv.textContent = "Vänligen fyll i ett giltigt värde (måste vara över 0)!";
   panel.appendChild(alertDiv);
 
   let input;
@@ -60,6 +59,19 @@ function showQuestion() {
     input = document.createElement("input");
     input.type = q.type;
     input.placeholder = q.placeholder || "";
+    
+    // --- FIX FÖR NEGATIV ÅLDER/VIKT ---
+    if (q.type === "number") {
+      input.min = "1";
+      // Denna rad rensar fältet om användaren skriver in "-" eller "0"
+      input.oninput = function() {
+        if (this.value !== "" && parseInt(this.value) <= 0) {
+          this.value = "";
+        }
+      };
+    }
+    // ----------------------------------
+    
     panel.appendChild(input);
   } else if (q.type === "select") {
     input = document.createElement("select");
@@ -105,7 +117,16 @@ function showQuestion() {
 
 function validateAnswer(q, input) {
   if (q.type === "text" && q.optional) return true;
-  if (q.type === "text" || q.type === "number" || q.type === "select") return input.value.trim() !== "";
+  
+  // --- FIX FÖR VALIDERING ---
+  // Om det är ett nummer, se till att det inte är tomt OCH över 0
+  if (q.type === "number") {
+    const val = parseInt(input.value);
+    return !isNaN(val) && val > 0;
+  }
+  // ---------------------------
+
+  if (q.type === "text" || q.type === "select") return input.value.trim() !== "";
   if (q.type === "radio") return input.querySelector('input[type="radio"]:checked') !== null;
   if (q.type === "checkbox") return input.querySelectorAll('input[type="checkbox"]:checked').length > 0;
   return true;
@@ -123,7 +144,6 @@ function saveAnswer(q, input) {
 }
 
 function finishQuestions() {
-  // Visa tack-meddelandet direkt
   container.innerHTML = `
     <div class="panel" style="text-align:center; padding: 40px;">
       <div class="ai-loader" style="font-size: 3rem; margin-bottom: 20px;">🤖</div>
@@ -133,7 +153,6 @@ function finishQuestions() {
     </div>
   `;
 
-  // Lägg till animation för spinnern i JS om den saknas i CSS
   const style = document.createElement('style');
   style.innerHTML = ` @keyframes spin { to { transform: rotate(360deg); } } `;
   document.head.appendChild(style);
@@ -147,24 +166,19 @@ function finishQuestions() {
     }
   }
 
-  // Skicka till servern
   fetch('../../Backend_Struktur/fragor.php', {
     method: 'POST',
     body: formData
   })
   .then(response => response.text())
   .then(text => {
-    // Vi struntar i att läsa JSON-objektet här för att undvika "localhost"-rutan
-    // Om vi har kommit hit har anropet gjorts. Vi väntar 2 sekunder för effekten.
     setTimeout(() => {
       window.location.href = "http://localhost/GA-SMARTGYM//Frontend_Struktur/Webbsidan/struktur/struktur.php";
     }, 2500);
   })
   .catch(err => {
-    // Vid fel skickar vi ändå vidare användaren så de inte fastnar
     window.location.href = "http://localhost/GA-SMARTGYM//Frontend_Struktur/Webbsidan/struktur/struktur.php";
   });
 }
 
-// Starta applikationen
 showQuestion();
